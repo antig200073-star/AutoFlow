@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
+    <title>Veículos</title>
+    <link rel="stylesheet" href="assets/css/identity.css?v=1">
+</head>
+
+<body>
+<aside>
+    <header class="sidebar-brand">
+        <a href="dashboard.html" class="brand-logo-link" aria-label="Ir para o painel AutoFlow">
+            <img class="sidebar-logo" src="assets/img/logo-autoflow.jpg" alt="AutoFlow Mecânica">
+        </a>
+        <p>Gestão automotiva</p>
+    </header>
+
+    <nav>
+        <h2>Navegação</h2>
+        <ul>
+            <li><a href="dashboard.html">Início</a></li>
+            <li><a href="oficinas.html">Oficinas</a></li>
+            <li><a href="avaliacoes.html">Avaliações</a></li>
+            <li><a href="perfil.html">Perfil</a></li>
+            <li><a href="index.html" id="logout-link">Sair</a></li>
+        </ul>
+    </nav>
+</aside>
+<main>
+
+    <header class="page-header">
+        <div>
+            <p>Gerenciamento</p>
+            <h1>Meus veículos</h1>
+        </div>
+    </header>
+
+
+    <section class="vehicles-section">
+
+    <h2>Veículos cadastrados</h2>
+
+    <div id="vehicle-list">
+        <p class="empty-state">Carregando veículos...</p>
+    </div>
+
+</section>
+
+
+    <section class="vehicle-form-section">
+
+        <h2>Cadastrar veículo</h2>
+
+        <form id="vehicle-form">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="modelo">Modelo</label>
+
+                    <input
+                        type="text"
+                        id="modelo"
+                        name="modelo"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="marca">Marca</label>
+
+                    <input
+                        type="text"
+                        id="marca"
+                        name="marca"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="placa">Placa</label>
+
+                    <input
+                        type="text"
+                        id="placa"
+                        name="placa"
+                        maxlength="7"
+                        placeholder="ABC1D23"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="ano">Ano</label>
+
+                    <input
+                        type="number"
+                        id="ano"
+                        name="ano"
+                        min="1900"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <button type="submit">
+                Cadastrar veículo
+            </button>
+
+            <p id="vehicle-message" class="form-message" aria-live="polite"></p>
+
+        </form>
+
+    </section>
+
+</main>
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js?v=9"></script>
+<script src="assets/js/script.js?v=9"></script>
+</body>
+</html>

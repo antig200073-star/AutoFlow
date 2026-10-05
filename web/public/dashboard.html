@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="assets/css/identity.css?v=1">
+</head>
+
+<body>
+
+<aside>
+    <header class="sidebar-brand">
+        <a href="dashboard.html" aria-current="page" class="brand-logo-link" aria-label="Ir para o painel AutoFlow">
+            <img class="sidebar-logo" src="assets/img/logo-autoflow.jpg" alt="AutoFlow Mecânica">
+        </a>
+        <p>Gestão automotiva</p>
+    </header>
+
+    <nav>
+        <h2>Navegação</h2>
+        <ul>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="oficinas.html">Oficinas</a></li>
+            <li><a href="avaliacoes.html">Avaliações</a></li>
+            <li><a href="perfil.html">Perfil</a></li>
+            <li><a href="index.html" id="logout-link">Sair</a></li>
+        </ul>
+    </nav>
+</aside>
+
+
+<main>
+
+    <header class="dashboard-header">
+
+        <div>
+            <p>Bem-vindo de volta!</p>
+            <h1>Dashboard</h1>
+        </div>
+
+        <a href="perfil.html" class="profile-link">
+            Meu perfil
+        </a>
+
+    </header>
+
+
+    <!-- VISÃO GERAL -->
+
+    <section>
+
+        <h2>Visão geral</h2>
+
+        <div class="cards">
+
+            <article class="card">
+                <h3>Veículos cadastrados</h3>
+                <p id="total-vehicles">0</p>
+            </article>
+
+            <article class="card">
+                <h3>Serviços em andamento</h3>
+                <p id="total-services">0</p>
+            </article>
+
+            <article class="card">
+                <h3>Manutenções finalizadas</h3>
+                <p id="total-finished">0</p>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- ACOMPANHAMENTO DA MANUTENÇÃO -->
+
+    <section class="maintenance-section">
+
+        <h2>Acompanhamento da manutenção</h2>
+
+        <article class="maintenance-card">
+
+            <h3 id="maintenance-vehicle-name">Nenhuma manutenção em andamento</h3>
+
+            <p>
+                Status atual:
+                <strong id="maintenance-status">
+                    Diagnóstico
+                </strong>
+            </p>
+
+            <div class="progress-steps">
+
+                <div class="step">
+                    Recebido
+                </div>
+
+                <div class="step">
+                    Diagnóstico
+                </div>
+
+                <div class="step">
+                    Aguardando Peça
+                </div>
+
+                <div class="step">
+                    Em Reparo
+                </div>
+
+                <div class="step">
+                    Pronto para Retirada
+                </div>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js?v=9"></script>
+<script src="assets/js/script.js?v=9"></script>
+
+</body>
+
+</html>

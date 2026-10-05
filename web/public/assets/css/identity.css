@@ -1,0 +1,47 @@
+:root {
+  --af-brand: #C62828; --af-brand-hover: #A61F1F;
+  --af-ink: #16181D; --af-muted: #586171; --af-surface: #FFFFFF;
+  --af-border: #D7DBE0; --af-background: #F3F4F6;
+}
+html, body { background: var(--af-background); color: var(--af-ink); font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color-scheme: light; }
+body:not(.login-page) main { background: #F3F4F6; color: #16181D; min-width: 0; }
+body:not(.login-page) main::before { background: #C62828; height: 4px; }
+aside { background: #16181D; color: #CCD1D8; }
+.sidebar-brand::after { background: #C62828; }
+.sidebar-logo { object-fit: contain; background: #000; border-radius: 12px; }
+.sidebar-brand p, aside nav h2 { color: #CCD1D8; }
+aside nav a { color: #CCD1D8; background: transparent; min-height: 44px; }
+aside nav a:hover, aside nav a:focus-visible { background: #30343B; color: #FFF; text-decoration: none; }
+aside nav a[aria-current='page'] { background: #C62828; color: #FFF; font-weight: 600; }
+main h1, main h2, main h3, .form-group label, .evaluation-form-section legend { color: #16181D; }
+.dashboard-header p, .page-header p, .card h3, .empty-state, .workshop-address, .workshop-distance { color: #586171; }
+.card, .maintenance-card, .vehicle-card, .workshop-card, .evaluation-card, .profile-section, .vehicle-form-section, .evaluation-form-section, .modal { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; border-radius: 12px; box-shadow: 0 4px 16px #16181D05; }
+.card::before, .card::after { display: none; }
+.card p { color: #16181D; }
+button, .button-link, .login-submit { background: #C62828; color: #FFF; min-height: 44px; border-radius: 8px; font-weight: 600; font-family: inherit; }
+button:hover, .button-link:hover, .login-submit:hover { background: #A61F1F; color: #FFF; }
+button:disabled { background: #D7DBE0; color: #586171; }
+.profile-link { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; box-shadow: none; }
+.profile-link:hover { background: #E9ECF0; color: #16181D; }
+.form-group input, .form-group select, .form-group textarea, #workshop-search { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; min-height: 44px; font-size: 16px; }
+input::placeholder, textarea::placeholder { color: #586171; }
+.step { background: #E9ECF0; color: #586171; border: 0; }
+.step.active { background: #EBF2FF; color: #2058A5; }
+.login-page { background: radial-gradient(ellipse at top, #5A1010, #16181D 66%); }
+.login-page::before, .login-page::after, .login-box::after { display: none; }
+.login-box { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; border-radius: 16px; box-shadow: 0 18px 50px #0004; }
+.login-logo { object-fit: contain; background: #000; border-radius: 12px; }
+.login-box .form-group label { color: #16181D; }
+.login-box .form-group input, .login-box .form-group select, .login-box .form-group textarea { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; }
+.login-header p, .register-link, .login-divider { color: #586171; }
+.register-link a { color: #A61F1F; }
+.toggle-password { background: #E9ECF0; color: #16181D; }
+.toggle-password:hover { background: #D7DBE0; color: #16181D; }
+.google-login-button { background: #FFF; color: #16181D; border: 1px solid #D7DBE0; }
+.google-login-button:hover { background: #E9ECF0; color: #16181D; }
+.login-divider::before, .login-divider::after { background: #D7DBE0; }
+.message-error, .login-box .message-error { color: #A61F1F; background: #FBEAEA; }
+.message-success, .login-box .message-success { color: #167447; background: #E7F5EB; }
+:focus-visible { outline: 3px solid #2058A5; outline-offset: 3px; }
+@media (max-width: 760px) { body:not(.login-page) main { padding: 24px 16px; } aside nav ul { display: flex; flex-wrap: wrap; gap: 4px; } aside nav li { margin: 0; } aside nav a { padding: 10px 12px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

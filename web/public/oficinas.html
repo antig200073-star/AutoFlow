@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
+    <title>Oficinas</title>
+    <link rel="stylesheet" href="assets/css/identity.css?v=1">
+</head>
+
+<body>
+
+<aside>
+    <header class="sidebar-brand">
+        <a href="dashboard.html" class="brand-logo-link" aria-label="Ir para o painel AutoFlow">
+            <img class="sidebar-logo" src="assets/img/logo-autoflow.jpg" alt="AutoFlow Mecânica">
+        </a>
+        <p>Gestão automotiva</p>
+    </header>
+
+    <nav>
+        <h2>Navegação</h2>
+        <ul>
+            <li><a href="dashboard.html">Início</a></li>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="avaliacoes.html">Avaliações</a></li>
+            <li><a href="perfil.html">Perfil</a></li>
+            <li><a href="index.html" id="logout-link">Sair</a></li>
+        </ul>
+    </nav>
+</aside>
+
+<main>
+
+    <header class="page-header">
+        <div>
+            <p>Localização</p>
+            <h1>Oficinas próximas</h1>
+        </div>
+    </header>
+
+
+    <section>
+
+        <h2>Encontre uma oficina</h2>
+
+        <div class="workshop-search-container">
+            <input
+                type="text"
+                id="workshop-search"
+                placeholder="Buscar por nome ou endereço..."
+            >
+        </div>
+
+
+        <div class="workshop-grid" id="workshop-list">
+            <p class="empty-state">Carregando oficinas...</p>
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- MODAL DE DETALHES DA OFICINA -->
+
+<div
+    class="modal-overlay"
+    id="workshop-modal"
+    hidden
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="workshop-modal-name">
+                Oficina
+            </h2>
+
+            <button
+                type="button"
+                id="close-workshop-modal"
+                class="modal-close"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <p id="workshop-modal-address"></p>
+
+        <p id="workshop-modal-distance"></p>
+
+        <p id="workshop-modal-rating"></p>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js?v=9"></script>
+<script src="assets/js/script.js?v=9"></script>
+
+</body>
+
+</html>

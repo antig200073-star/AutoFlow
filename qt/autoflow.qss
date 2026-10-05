@@ -1,0 +1,22 @@
+QWidget {background:#F3F4F6;color:#16181D;font-family:"Segoe UI";font-size:14px;}
+QLabel {background:transparent;}
+QFrame#sidebar {background:#16181D;border:0;}
+QFrame#sidebar QLabel {color:#CCD1D8;}
+QLabel#lblLogo {background:#000000;border-radius:12px;}
+QFrame[class="statCard"], QFrame#card1, QFrame#card2, QFrame#card3, QFrame#card4 {background:#FFFFFF;border:1px solid #D7DBE0;border-radius:12px;}
+QLabel[class="cardValue"] {font-size:28px;font-weight:bold;color:#16181D;}
+QLabel[class="cardTitle"] {color:#586171;}
+QPushButton {background:#FFFFFF;color:#16181D;border:1px solid #D7DBE0;border-radius:8px;padding:10px 16px;min-height:22px;}
+QPushButton:hover {background:#E9ECF0;}
+QPushButton[primary="true"] {background:#C62828;color:#FFFFFF;border:1px solid #C62828;font-weight:bold;}
+QPushButton[primary="true"]:hover {background:#A61F1F;}
+QPushButton:disabled {background:#D7DBE0;color:#586171;}
+QFrame#sidebar QPushButton {background:transparent;color:#CCD1D8;border:0;text-align:left;padding:12px;}
+QFrame#sidebar QPushButton:hover {background:#30343B;color:#FFFFFF;}
+QFrame#sidebar QPushButton:checked {background:#C62828;color:#FFFFFF;}
+QPushButton:focus, QLineEdit:focus, QComboBox:focus, QTextEdit:focus {border:2px solid #2058A5;}
+QLineEdit, QComboBox, QTextEdit, QSpinBox, QDateEdit {background:#FFFFFF;color:#16181D;border:1px solid #D7DBE0;border-radius:8px;padding:8px;min-height:24px;selection-background-color:#C62828;selection-color:#FFFFFF;}
+QTableWidget, QTableView {background:#FFFFFF;color:#16181D;alternate-background-color:#F3F4F6;gridline-color:#D7DBE0;border:1px solid #D7DBE0;border-radius:8px;selection-background-color:#FBEAEA;selection-color:#16181D;}
+QHeaderView::section {background:#E9ECF0;color:#586171;padding:10px;border:0;border-bottom:1px solid #D7DBE0;font-weight:bold;}
+QScrollBar:vertical {background:#F3F4F6;width:12px;}
+QScrollBar::handle:vertical {background:#A8AFBA;border-radius:6px;min-height:24px;}

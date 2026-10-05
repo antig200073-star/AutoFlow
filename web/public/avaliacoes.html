@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
+    <title>Avaliações</title>
+    <link rel="stylesheet" href="assets/css/identity.css?v=1">
+</head>
+
+<body>
+
+<aside>
+    <header class="sidebar-brand">
+        <a href="dashboard.html" class="brand-logo-link" aria-label="Ir para o painel AutoFlow">
+            <img class="sidebar-logo" src="assets/img/logo-autoflow.jpg" alt="AutoFlow Mecânica">
+        </a>
+        <p>Gestão automotiva</p>
+    </header>
+
+    <nav>
+        <h2>Navegação</h2>
+        <ul>
+            <li><a href="dashboard.html">Início</a></li>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="oficinas.html">Oficinas</a></li>
+            <li><a href="perfil.html">Perfil</a></li>
+            <li><a href="index.html" id="logout-link">Sair</a></li>
+        </ul>
+    </nav>
+</aside>
+
+<main>
+
+    <header class="page-header">
+        <div>
+            <p>Experiência</p>
+            <h1>Avaliações</h1>
+        </div>
+    </header>
+
+
+    <section class="evaluation-form-section">
+
+        <h2>Avalie seu atendimento</h2>
+
+        <p>
+            Conte como foi sua experiência com a oficina.
+        </p>
+
+
+        <form id="evaluation-form">
+
+            <div class="form-group">
+                <label for="evaluation-order">Serviço concluído</label>
+                <select id="evaluation-order" name="os_id" required>
+                    <option value="">Selecione uma ordem de serviço</option>
+                </select>
+            </div>
+
+            <fieldset class="rating-field">
+
+                <legend>Selecione uma nota</legend>
+
+                <div class="stars" id="stars">
+
+                    <button
+                        type="button"
+                        class="rating-star"
+                        data-value="1"
+                    >
+                        ★
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rating-star"
+                        data-value="2"
+                    >
+                        ★
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rating-star"
+                        data-value="3"
+                    >
+                        ★
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rating-star"
+                        data-value="4"
+                    >
+                        ★
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rating-star"
+                        data-value="5"
+                    >
+                        ★
+                    </button>
+
+                </div>
+
+                <input
+                    type="hidden"
+                    id="rating-value"
+                    name="nota"
+                >
+
+            </fieldset>
+
+
+            <div class="form-group">
+
+                <label for="comentario">
+                    Comentário
+                </label>
+
+                <textarea
+                    id="comentario"
+                    name="comentario"
+                    rows="5"
+                    placeholder="Conte como foi sua experiência..."
+                ></textarea>
+
+            </div>
+
+
+            <button type="submit">
+                Enviar avaliação
+            </button>
+            <p id="evaluation-message"></p>
+
+        </form>
+
+    </section>
+
+
+    <section class="previous-evaluations">
+
+        <h2>Avaliações anteriores</h2>
+
+        <div class="evaluation-grid" id="evaluation-list">
+
+            <p class="empty-state">Carregando avaliações...</p>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js?v=9"></script>
+<script src="assets/js/script.js?v=9"></script>
+
+</body>
+
+</html>

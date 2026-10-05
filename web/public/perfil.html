@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
+    <title>Perfil</title>
+    <link rel="stylesheet" href="assets/css/identity.css?v=1">
+</head>
+
+<body>
+<aside>
+    <header class="sidebar-brand">
+        <a href="dashboard.html" class="brand-logo-link" aria-label="Ir para o painel AutoFlow">
+            <img class="sidebar-logo" src="assets/img/logo-autoflow.jpg" alt="AutoFlow Mecânica">
+        </a>
+        <p>Gestão automotiva</p>
+    </header>
+
+    <nav>
+        <h2>Navegação</h2>
+        <ul>
+            <li><a href="dashboard.html">Início</a></li>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="oficinas.html">Oficinas</a></li>
+            <li><a href="avaliacoes.html">Avaliações</a></li>
+            <li><a href="index.html" id="logout-link">Sair</a></li>
+        </ul>
+    </nav>
+</aside>
+<main>
+
+    <header class="page-header">
+
+        <div>
+            <p>Minha conta</p>
+            <h1>Perfil</h1>
+        </div>
+
+    </header>
+
+
+    <section class="profile-section">
+
+    <h2>Meus dados</h2>
+
+    <form id="profile-form">
+
+        <div class="form-group">
+            <label for="profile-name">Nome</label>
+            <input
+                type="text"
+                id="profile-name"
+                name="nome"
+                value="Samuel Bueno"
+                autocomplete="name"
+                required
+                readonly
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="profile-email">E-mail</label>
+            <input
+                type="email"
+                id="profile-email"
+                name="email"
+                value="samuel@email.com"
+                autocomplete="email"
+                required
+                readonly
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="profile-phone">Telefone</label>
+            <input
+                type="text"
+                id="profile-phone"
+                name="telefone"
+                value="(11) 99999-9999"
+                autocomplete="tel"
+                readonly
+            >
+        </div>
+
+        <div class="profile-actions">
+
+            <button
+                type="button"
+                id="edit-profile"
+            >
+                Editar
+            </button>
+
+            <button
+                type="submit"
+                id="save-profile"
+                hidden
+            >
+                Salvar
+            </button>
+
+            <button
+                type="button"
+                id="cancel-profile"
+                hidden
+            >
+                Cancelar
+            </button>
+
+        </div>
+
+    </form>
+
+    <p id="profile-message"></p>
+
+</section>
+
+</main>
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js?v=9"></script>
+<script src="assets/js/script.js?v=9"></script>
+</body>
+</html>
