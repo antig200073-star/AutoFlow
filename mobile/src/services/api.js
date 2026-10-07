@@ -50,12 +50,24 @@ export async function registerUser({ nome, telefone, email, senha }) {
       .eq("auth_user_id", data.user.id);
   }
 
-  return { success: true, message: "Conta criada com sucesso!" };
+  return { success: true, message: data.session ? "Conta criada. Entre para continuar." : "Confira seu e-mail para confirmar a conta. Se já tem cadastro, entre com sua senha." };
 }
 
 export async function logoutUser() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) throw error;
+}
+
+export async function fetchApprovedWorkshops() {
+  const { data, error } = await supabase.from('oficinas')
+    .select('id,nome,logradouro,numero,bairro,cidade,estado')
+    .eq('status', 'aprovada').order('nome');
+  if (error) throw error;
+  return (data || []).map(row => ({
+    id: row.id, nome: row.nome,
+    endereco: [row.logradouro,row.numero,row.bairro,row.cidade,row.estado].filter(Boolean).join(', '),
+    distancia: 'Distância não calculada', avaliacao: 'Oficina aprovada',
+  }));
 }
 
 // Veículos

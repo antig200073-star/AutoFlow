@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from './supabase';
+import { loginUser, logoutUser } from './services/api';
 import Cad from './Cad';
 import Dash from './dash';
 import Veiculos from './Veiculos';
@@ -13,11 +15,18 @@ function Login({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Navega direto para a tela Dash
-    onNavigate('dash');
+    setBusy(true); setMessage('');
+    try {
+      const result = await loginUser(email.trim(), senha);
+      if (result.success) onNavigate('dash');
+      else setMessage(result.message);
+    } catch { setMessage('Não foi possível conectar. Tente novamente.'); }
+    finally { setBusy(false); }
   };
 
   return (
@@ -65,7 +74,8 @@ function Login({ onNavigate }) {
               </button>
             </div>
 
-            <button type="submit">Entrar</button>
+            <button type="submit" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+            <p role="status" className="form-message message-error">{message}</p>
           </form>
 
           <p className="register-link">
@@ -85,7 +95,10 @@ function Login({ onNavigate }) {
         <button
           id="btn-google"
           type="button"
-          onClick={() => onNavigate('dash')}
+          onClick={async () => {
+            const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
+            if (error) setMessage('Não foi possível entrar com o Google. Confira a configuração do provedor.');
+          }}
         >
           Entrar com o Google
         </button>
@@ -96,6 +109,21 @@ function Login({ onNavigate }) {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data }) => { if (mounted && data.user) setCurrentPage('dash'); }).catch(() => {});
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') setCurrentPage('login');
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
+  }, []);
+  const navigate = async (page) => {
+    if (page === 'login') {
+      try { await logoutUser(); }
+      catch { window.alert('Não foi possível encerrar a sessão. Tente novamente.'); return; }
+    }
+    setCurrentPage(page);
+  };
   const authenticatedPage = !['login', 'cadastro'].includes(currentPage);
 
   return (
@@ -107,7 +135,7 @@ export default function App() {
       {currentPage === 'veiculos' && <Veiculos />}
       {currentPage === 'oficinas' && <Oficinas />}
       {currentPage === 'avaliacoes' && <Avaliacoes />}
-      {currentPage === 'perfil' && <Perfil onNavigate={setCurrentPage} />}
+      {currentPage === 'perfil' && <Perfil onNavigate={navigate} />}
       {currentPage === 'servicos' && <Dash onNavigate={setCurrentPage} serviceOnly />}
       {authenticatedPage && <BottomNavigation currentPage={currentPage} onNavigate={setCurrentPage} />}
     </div>

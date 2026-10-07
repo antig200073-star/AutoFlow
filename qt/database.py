@@ -1,11 +1,11 @@
-import sys
+import os
 from supabase import create_client, Client
 
 # ==========================================
 # CREDENCIAIS DO SUPABASE
 # ==========================================
-SUPABASE_URL = "https://tohlfwbzmkjlivcpssbe.supabase.co"
-SUPABASE_KEY = "sb_publishable_mhjRE7bumaGkOBsmv9TpBw_TwC49j6D"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://tohlfwbzmkjlivcpssbe.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "sb_publishable_mhjRE7bumaGkOBsmv9TpBw_TwC49j6D")
 
 def conectar_supabase() -> Client:
     """Inicializa e retorna o cliente do Supabase."""

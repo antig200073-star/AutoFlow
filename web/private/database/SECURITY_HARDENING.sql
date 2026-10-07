@@ -1,3 +1,5 @@
+-- ATENÇÃO: script anterior à verificação de oficinas. Execute ANTES da migração
+-- supabase/migrations/20261007164947_workshop_verification.sql, nunca depois.
 -- AUTOFLOW - endurecimento para a arquitetura atual
 -- O site do cliente NÃO cria nem altera ordens de serviço.
 -- Execute no SQL Editor do Supabase após o SUPABASE_SETUP.sql.

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Brand from './Brand';
+import { registerUser } from './services/api';
 
 export default function Cad({ onNavigate }) {
   const [formData, setFormData] = useState({
@@ -42,29 +43,10 @@ export default function Cad({ onNavigate }) {
     };
 
     try {
-      const hook = window.AutoFlowIntegration?.register;
-
-      if (typeof hook === 'function') {
-        const result = await hook(payload);
-
-        if (result?.success === false) {
-          setMessage({
-            text: result.message || 'Não foi possível criar a conta.',
-            type: 'message-error',
-          });
-          return;
-        }
-
-        setMessage({
-          text: result?.message || 'Conta criada com sucesso!',
-          type: 'message-success',
-        });
-        return;
-      }
-
+      const result = await registerUser(payload);
       setMessage({
-        text: 'Cadastro validado com sucesso.',
-        type: 'message-success',
+        text: result.message || 'Não foi possível criar a conta.',
+        type: result.success ? 'message-success' : 'message-error',
       });
     } catch (error) {
       console.error(error);

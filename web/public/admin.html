@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoFlow • Verificação de oficinas</title>
+  <link rel="icon" href="assets/img/logo-autoflow.jpg">
+  <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+  <header class="topbar"><a href="index.html" class="brand"><img src="assets/img/logo-autoflow.jpg" alt="AutoFlow"><span>Administração<small>Verificação de oficinas</small></span></a><button id="logout" hidden>Sair</button></header>
+  <main>
+    <p class="eyebrow">REDE AUTOFLOW</p>
+    <h1>Oficinas verificadas.<br>Confiança em cada atendimento.</h1>
+    <p class="intro">O CNPJ confirma o cadastro da empresa. A revisão confirma a atividade e o vínculo de quem solicita acesso.</p>
+    <p id="message" role="status" aria-live="polite"></p>
+    <section id="login-panel" class="panel login-panel">
+      <h2>Entrar na administração</h2>
+      <p>Use uma conta autorizada pelo responsável pelo projeto.</p>
+      <form id="admin-login">
+        <label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required>
+        <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required>
+        <button type="submit">Entrar</button>
+      </form>
+    </section>
+    <section id="review-panel" hidden>
+      <div class="toolbar"><div><h2>Fila de revisão</h2><p id="count"></p></div><div class="filters"><label for="filter">Status</label><select id="filter"><option value="pendente">Pendentes</option><option value="em_verificacao">Em verificação</option><option value="aprovada">Aprovadas</option><option value="rejeitada">Rejeitadas</option><option value="bloqueada">Bloqueadas</option><option value="">Todos</option></select><button id="reload" class="secondary">Atualizar</button></div></div>
+      <div class="review-grid"><div id="workshops" class="workshop-list" aria-label="Oficinas"></div>
+        <section id="detail" class="panel" aria-label="Detalhes da oficina"><p>Selecione uma oficina para iniciar a revisão.</p></section>
+      </div>
+    </section>
+  </main>
+  <footer>AutoFlow • Acesso restrito à equipe responsável pela verificação</footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 import sys
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMessageBox
-import re
 from datetime import date
 from pathlib import Path
 from PyQt5.QtGui import QIcon, QPixmap
@@ -9,151 +8,155 @@ from PyQt5.QtCore import Qt
 BASE_DIR = Path(__file__).resolve().parent
 # Importa a conexão configurada no arquivo database.py
 from database import supabase
-# Oficina logada
+from workshop_auth import current_workshop, require_approved, register_workshop, STATUS_MESSAGES
+from PyQt5.QtCore import QTimer
 oficina_logada = None
-# ==========================================
-# FUNÇÕES DE TRANSIÇÃO DE TELAS
-# ==========================================
+
+
 def tela_login():
+    global oficina_logada
+    oficina_logada = None
+    for window in (form_cad, form_prin, form_cad_os, form_patio, form_status):
+        window.close()
+    try:
+        if supabase:
+            supabase.auth.sign_out()
+    except Exception:
+        pass
+    form.txtSenha.clear()
+    form_cad.txtSenha.clear()
+    form_cad.txtEmail.setReadOnly(False)
+    form_cad.txtSenha.setEnabled(True)
     form.show()
-    form_cad.close()
-    form_prin.close()
+
 
 def tela_cadastro():
     form.close()
-    form_cad.show()
     form_prin.close()
+    form_status.close()
+    form_cad.show()
 
-def tela_inicio():
-    form.close()
-    form_cad.close()
-    carregar_dashboard()
-    form_prin.show()
 
-def abrir_veipatio():
-    form_patio.exec_()
+def mostrar_status(workshop):
+    for window in (form, form_cad, form_prin, form_cad_os, form_patio):
+        window.close()
+    status_label.setText(STATUS_MESSAGES.get(workshop.get("status"), "Cadastro sem aprovação."))
+    status_detail.setText(workshop.get("motivo_status") or "O painel será liberado após a confirmação da oficina e do seu vínculo com ela.")
+    form_status.show()
 
-# ==========================================
-# LÓGICA DE CADASTRO DA OFICINA
-# ==========================================
-def cadastrar_usuario():
-    nome = form_cad.txtNomeOficina.text().strip()
-    cnpj = form_cad.txtCnpj.text().strip()
-    email = form_cad.txtEmail.text().strip()
-    senha = form_cad.txtSenha.text().strip()
-    telefone = form_cad.txtTelefone.text().strip()
-    cep = form_cad.txtCep.text().strip()
-    logradouro = form_cad.txtLogradouro.text().strip()
-    numero = form_cad.txtNumero.text().strip()
-    bairro = form_cad.txtBairro.text().strip()
-    cidade = form_cad.txtCidade.text().strip()
-    estado = form_cad.txtEstado.text().strip()
 
-    if not nome or not email or not cnpj or not senha:
-        QMessageBox.warning(form_cad, "Aviso", "Preencha ao menos Nome, CNPJ, E-mail e Senha!")
-        return
+def conferir_acesso():
+    global oficina_logada
+    oficina_logada = current_workshop(supabase)
+    if not oficina_logada:
+        user = supabase.auth.get_user().user
+        form_cad.txtEmail.setText(user.email)
+        form_cad.txtEmail.setReadOnly(True)
+        form_cad.txtSenha.setEnabled(False)
+        form_cad.txtSenha.clear()
+        tela_cadastro()
+    elif oficina_logada.get("status") != "aprovada":
+        mostrar_status(oficina_logada)
+    else:
+        for window in (form, form_cad, form_status):
+            window.close()
+        if carregar_dashboard():
+            form_prin.show()
 
-    if not supabase:
-        QMessageBox.critical(form_cad, "Erro", "Sem conexão com o Supabase!")
-        return
 
+def atualizar_acesso():
     try:
-        # Check de e-mail existente
-        res = supabase.table("oficinas").select("email").eq("email", email).execute()
-        if len(res.data) > 0:
-            QMessageBox.warning(form_cad, "Aviso", "Este e-mail já está cadastrado!")
-            return
-
-        # Sanitização dos campos
-        cnpj_limpo = re.sub(r'\D', '', cnpj)[:14]
-        cep_limpo = re.sub(r'\D', '', cep)[:8]
-        telefone_limpo = re.sub(r'\D', '', telefone)[:15]
-        estado_limpo = estado.strip().upper()[:2]
-
-        dados = {
-            "nome": nome,
-            "cnpj": cnpj_limpo,
-            "email": email,
-            "senha": senha,
-            "telefone": telefone_limpo,
-            "cep": cep_limpo,
-            "logradouro": logradouro,
-            "numero": numero,
-            "bairro": bairro,
-            "cidade": cidade,
-            "estado": estado_limpo
-        }
-
-        supabase.table("oficinas").insert(dados).execute()
-
-        QMessageBox.information(form_cad, "Sucesso", "Oficina cadastrada com sucesso!")
-        limpar_campos_cadastro()
+        conferir_acesso()
+    except Exception:
+        QMessageBox.warning(form_status, "Conexão", "Não foi possível conferir seu acesso. Entre novamente.")
         tela_login()
 
-    except Exception as erro:
-        QMessageBox.critical(form_cad, "Erro no Banco", f"Falha ao cadastrar: {erro}")
 
-def limpar_campos_cadastro():
-    campos = [
-        form_cad.txtNomeOficina, form_cad.txtCnpj, form_cad.txtEmail, form_cad.txtSenha,
-        form_cad.txtTelefone, form_cad.txtCep, form_cad.txtLogradouro,
-        form_cad.txtNumero, form_cad.txtBairro, form_cad.txtCidade, form_cad.txtEstado
-    ]
-    for campo in campos:
-        campo.clear()
+def acesso_aprovado():
+    global oficina_logada
+    try:
+        oficina_logada = require_approved(supabase)
+        return True
+    except Exception as error:
+        for window in (form_prin, form_cad_os, form_patio):
+            window.close()
+        status_label.setText(str(error) if isinstance(error, PermissionError) else "Não foi possível verificar o acesso.")
+        status_detail.setText("Atualize o status ou saia e entre novamente.")
+        form_status.show()
+        return False
+
+
+def abrir_veipatio():
+    if acesso_aprovado():
+        form_patio.exec_()
+
+
+def cadastrar_usuario():
+    email = form_cad.txtEmail.text().strip()
+    senha = form_cad.txtSenha.text()  # Preserva espaços válidos da senha.
+    cnpj = form_cad.txtCnpj.text().strip()
+    if not email or not cnpj:
+        QMessageBox.warning(form_cad, "Cadastro", "Informe e-mail e CNPJ.")
+        return
+    if not supabase:
+        QMessageBox.critical(form_cad, "Conexão", "Não foi possível iniciar a conexão.")
+        return
+    form_cad.btnCadastrar.setEnabled(False)
+    try:
+        session = supabase.auth.get_session()
+        if not session:
+            if len(senha) < 8:
+                raise ValueError("Use uma senha com pelo menos 8 caracteres.")
+            result = supabase.auth.sign_up({"email": email, "password": senha})
+            form_cad.txtSenha.clear()
+            if not result.session:
+                QMessageBox.information(form_cad, "Confirme seu e-mail", "Se o e-mail estiver disponível, você receberá uma confirmação. Confirme o e-mail, entre na conta e informe o CNPJ para concluir o cadastro. Se já tem conta, entre com sua senha.")
+                tela_login()
+                return
+        register_workshop(supabase, cnpj)
+        form_cad.txtSenha.clear()
+        conferir_acesso()
+    except Exception as error:
+        message = str(error) if isinstance(error, ValueError) else "Não foi possível cadastrar. Se já tem conta, volte e entre com sua senha."
+        QMessageBox.warning(form_cad, "Cadastro", message)
+    finally:
+        form_cad.btnCadastrar.setEnabled(True)
+
 
 def efetuar_login():
-    global oficina_logada
-    usuario_email = form.txtUsuario.text().strip()
-    senha = form.txtSenha.text().strip()
-
-    if not usuario_email or not senha:
-        QMessageBox.warning(form, "Aviso", "Digite o e-mail e a senha!")
+    email = form.txtUsuario.text().strip()
+    senha = form.txtSenha.text()
+    if not email or not senha:
+        QMessageBox.warning(form, "Login", "Digite o e-mail e a senha.")
         return
-
-    if not supabase:
-        QMessageBox.critical(form, "Erro", "Sem conexão com o Supabase!")
-        return
-
+    form.btnEntrar.setEnabled(False)
     try:
-        res = supabase.table("oficinas").select("*").eq("email", usuario_email).eq("senha", senha).execute()
+        supabase.auth.sign_in_with_password({"email": email, "password": senha})
+        form.txtSenha.clear()
+        conferir_acesso()
+    except Exception:
+        QMessageBox.warning(form, "Login", "Não foi possível entrar. Confira e-mail, senha, confirmação de e-mail e conexão.")
+    finally:
+        form.btnEntrar.setEnabled(True)
 
-        if len(res.data) > 0:
-            oficina_logada = res.data[0]  # Guarda os dados da oficina (incluindo o ID)
-            form.txtUsuario.clear()
-            form.txtSenha.clear()
-            tela_inicio()
-        else:
-            QMessageBox.warning(form, "Erro de Autenticação", "E-mail ou senha incorretos!")
-
-    except Exception as erro:
-        QMessageBox.critical(form, "Erro", f"Falha na autenticação: {erro}")
-
-def limpar_campos_cadastro():
-    campos = [
-        form_cad.txtNomeOficina, form_cad.txtCnpj, form_cad.txtEmail,
-        form_cad.txtTelefone, form_cad.txtCep, form_cad.txtLogradouro,
-        form_cad.txtNumero, form_cad.txtBairro, form_cad.txtCidade, form_cad.txtEstado
-    ]
-    for campo in campos:
-        campo.clear()
 
 # ==========================================
 # tela principal
 # ==========================================
 def carregar_dashboard():
-    if not supabase:
-        return
+    if not acesso_aprovado():
+        return False
 
     try:
         # 1. Veículos no Pátio (tb_veiculo)
-        res_patio = supabase.table("tb_veiculo").select("id_veiculo", count="exact").execute()
-        qtd_patio = res_patio.count if res_patio.count is not None else 0
+        res_patio = supabase.table("ordens_servico").select("veiculo_id").eq("oficina_id", oficina_logada["id"]).neq("status", "entregue").execute()
+        qtd_patio = len({row["veiculo_id"] for row in res_patio.data})
         form_prin.lblV1.setText(str(qtd_patio))
 
         # 2. O.S. em Andamento (Status: em_analise ou em_manutencao)
         res_os = supabase.table("ordens_servico") \
             .select("id", count="exact") \
+            .eq("oficina_id", oficina_logada["id"]) \
             .in_("status", ["em_analise", "em_manutencao"]) \
             .execute()
         qtd_os = res_os.count if res_os.count is not None else 0
@@ -162,6 +165,7 @@ def carregar_dashboard():
         # 3. Aguardando Peças (Status: aguardando)
         res_pecas = supabase.table("ordens_servico") \
             .select("id", count="exact") \
+            .eq("oficina_id", oficina_logada["id"]) \
             .eq("status", "aguardando") \
             .execute()
         qtd_pecas = res_pecas.count if res_pecas.count is not None else 0
@@ -171,14 +175,20 @@ def carregar_dashboard():
         hoje = date.today().isoformat()
         res_concluidas = supabase.table("ordens_servico") \
             .select("id", count="exact") \
+            .eq("oficina_id", oficina_logada["id"]) \
             .in_("status", ["pronto", "entregue"]) \
             .gte("data_entrada", hoje) \
             .execute()
         qtd_concluidas = res_concluidas.count if res_concluidas.count is not None else 0
         form_prin.lblV4.setText(str(qtd_concluidas))
+        return True
 
     except Exception as erro:
-        print(f"Erro ao carregar dashboard: {erro}")
+        status_label.setText("Não foi possível carregar o painel.")
+        status_detail.setText("Confira sua conexão e atualize o status para tentar novamente.")
+        form_prin.close()
+        form_status.show()
+        return False
 
 # ==========================================
 # CADASTRO DE OS
@@ -190,6 +200,8 @@ STATUS_MAP = {
     "Aguardando Aprovação": "aguardando"
 }
 def abrir_cad_os():
+    if not acesso_aprovado():
+        return
     # Limpa os campos antes de abrir
     form_cad_os.txtPlaca.clear()
     form_cad_os.txtVeiculo.clear()
@@ -202,68 +214,21 @@ def abrir_cad_os():
     form_cad_os.show()
 
 def salvar_ordem_servico():
-    global oficina_logada
-
-    # 1. Tratamento da placa: remove espaços e hífens, tornando tudo maiúsculo
-    placa_bruta = form_cad_os.txtPlaca.text().strip().upper()
-    placa_limpa = placa_bruta.replace("-", "").replace(" ", "")
-
-    modelo_texto = form_cad_os.txtVeiculo.text().strip()
-    cliente_nome = form_cad_os.txtCliente.text().strip()
-    defeito = form_cad_os.txtDefeito.toPlainText().strip()
-    status_tela = form_cad_os.cmbStatus.currentText()
-
-    status_banco = STATUS_MAP.get(status_tela, "aguardando")
-
-    if not placa_limpa or not cliente_nome:
-        QMessageBox.warning(form_cad_os, "Aviso", "Preencha a placa do veículo e o nome do cliente.")
+    if not acesso_aprovado():
         return
-
     try:
-        # 2. Busca o cliente (ou insere se não existir)
-        res_cli = supabase.table("tb_cli").select("id_cliente").ilike("nome", cliente_nome).execute()
-        if res_cli.data:
-            cliente_id = res_cli.data[0]["id_cliente"]
-        else:
-            novo_cli = supabase.table("tb_cli").insert({"nome": cliente_nome}).execute()
-            cliente_id = novo_cli.data[0]["id_cliente"]
-
-        # 3. Busca a placa usando busca flexível (ILIKES ignora maiúsculas/minúsculas)
-        # Tenta buscar tanto pela placa limpa quanto pela placa bruta digitada
-        res_veiculo = supabase.table("tb_veiculo").select("id_veiculo") \
-            .or_(f"placa.ilike.{placa_limpa},placa.ilike.{placa_bruta}") \
-            .execute()
-
-        if res_veiculo.data:
-            veiculo_id = res_veiculo.data[0]["id_veiculo"]
-        else:
-            # Se não encontrou de forma alguma, grava o novo veículo padronizado (sem hífen)
-            novo_veiculo = supabase.table("tb_veiculo").insert({
-                "placa": placa_limpa,
-                "modelo": modelo_texto,
-                "cliente_id": cliente_id
-            }).execute()
-            veiculo_id = novo_veiculo.data[0]["id_veiculo"]
-
-        # 4. Registra a O.S.
-        oficina_id = oficina_logada["id"] if oficina_logada else 1
-        dados_os = {
-            "oficina_id": oficina_id,
-            "cliente_id": cliente_id,
-            "veiculo_id": veiculo_id,
-            "status": status_banco,
-            "descricao_problema": defeito
-        }
-
-        resposta = supabase.table("ordens_servico").insert(dados_os).execute()
-
-        if resposta.data:
-            QMessageBox.information(form_cad_os, "Sucesso", "Ordem de Serviço criada com sucesso!")
-            form_cad_os.close()
-            carregar_dashboard()
-
-    except Exception as erro:
-        QMessageBox.critical(form_cad_os, "Erro no Banco", f"Falha ao salvar O.S.: {erro}")
+        supabase.rpc("create_workshop_order", {
+            "p_plate": form_cad_os.txtPlaca.text().strip(),
+            "p_model": form_cad_os.txtVeiculo.text().strip(),
+            "p_client": form_cad_os.txtCliente.text().strip(),
+            "p_problem": form_cad_os.txtDefeito.toPlainText().strip(),
+            "p_status": STATUS_MAP.get(form_cad_os.cmbStatus.currentText(), "aguardando"),
+        }).execute()
+        QMessageBox.information(form_cad_os, "Sucesso", "Ordem de serviço criada.")
+        form_cad_os.close()
+        carregar_dashboard()
+    except Exception:
+        QMessageBox.warning(form_cad_os, "Ordem de serviço", "Não foi possível salvar. Confira placa, cliente e conexão. O cadastro precisa estar aprovado; uma placa já atendida deve manter o mesmo cliente.")
 
 
 # ==========================================
@@ -313,6 +278,31 @@ form_cad_os.btnCancelar.clicked.connect(form_cad_os.close)
 
 # Eventos - Pátio
 form_patio.btnVoltar.clicked.connect(form_patio.close)
+
+# Status persistente para cadastros pendentes e acesso revogado.
+form_status = QtWidgets.QDialog()
+form_status.setWindowTitle("AutoFlow • Verificação da oficina")
+form_status.setMinimumSize(480, 260)
+status_layout = QtWidgets.QVBoxLayout(form_status)
+status_label = QtWidgets.QLabel()
+status_label.setWordWrap(True)
+status_label.setStyleSheet("font-size: 22px; font-weight: bold;")
+status_detail = QtWidgets.QLabel()
+status_detail.setWordWrap(True)
+status_layout.addWidget(status_label)
+status_layout.addWidget(status_detail)
+refresh_status = QtWidgets.QPushButton("Atualizar status")
+refresh_status.clicked.connect(atualizar_acesso)
+status_layout.addWidget(refresh_status)
+signout_status = QtWidgets.QPushButton("Sair")
+signout_status.clicked.connect(tela_login)
+status_layout.addWidget(signout_status)
+
+# Revogação também fecha telas abertas. RLS protege as operações imediatamente.
+access_timer = QTimer()
+access_timer.setInterval(60000)
+access_timer.timeout.connect(lambda: acesso_aprovado() if form_prin.isVisible() else None)
+access_timer.start()
 
 form.show()
 sys.exit(app.exec_())

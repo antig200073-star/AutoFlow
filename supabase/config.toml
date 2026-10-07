@@ -1,0 +1,5 @@
+project_id = "autoflow"
+
+[functions.register-workshop]
+# Validação explícita via auth.getUser(token), compatível com chaves publicáveis.
+verify_jwt = false

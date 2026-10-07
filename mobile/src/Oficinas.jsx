@@ -1,40 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { fetchApprovedWorkshops } from './services/api';
 
 export default function Oficinas() {
   const [workshops, setWorkshops] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
+  const [error, setError] = useState('');
 
   // Carrega lista de oficinas
   useEffect(() => {
     async function fetchWorkshops() {
       try {
-        const hook = window.AutoFlowIntegration?.loadWorkshops;
-        if (typeof hook === 'function') {
-          const result = await hook();
-          setWorkshops(result || []);
-        } else {
-          // Dados de exemplo caso a integração ainda não esteja pronta
-          setWorkshops([
-            {
-              id: 1,
-              nome: 'Oficina AutoTech',
-              endereco: 'Av. Paulista, 1000 - São Paulo',
-              distancia: '1.5 km',
-              avaliacao: '4.8 ⭐',
-            },
-            {
-              id: 2,
-              nome: 'Mecânica Central',
-              endereco: 'Rua Augusta, 500 - São Paulo',
-              distancia: '3.2 km',
-              avaliacao: '4.5 ⭐',
-            },
-          ]);
-        }
+        setWorkshops(await fetchApprovedWorkshops());
       } catch (error) {
         console.error('Erro ao carregar oficinas:', error);
+        setError('Não foi possível carregar as oficinas aprovadas. Confira sua conexão e entre novamente.');
       } finally {
         setLoading(false);
       }
@@ -59,7 +40,7 @@ export default function Oficinas() {
         <header className="page-header">
           <div>
             <p>Localização</p>
-            <h1>Oficinas próximas</h1>
+            <h1>Oficinas aprovadas</h1>
           </div>
         </header>
 
@@ -77,7 +58,7 @@ export default function Oficinas() {
           </div>
 
           <div className="workshop-grid" id="workshop-list">
-            {loading ? (
+            {error ? <p className="empty-state" role="alert">{error}</p> : loading ? (
               <p className="empty-state">Carregando oficinas...</p>
             ) : filteredWorkshops.length === 0 ? (
               <p className="empty-state">Nenhuma oficina encontrada.</p>

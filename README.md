@@ -18,6 +18,14 @@ Vermelho `#C62828` para ações principais, grafite `#16181D` para navegação e
 - Mobile: `mobile/src/identity.css`; barra inferior única com Início, Oficinas, Veículos, Serviços e Perfil. O acesso às avaliações fica em Serviços; Sair fica em Perfil.
 - Qt: `qt/autoflow.qss`, também incorporado aos arquivos `.ui` para visualização no Designer. As janelas são carregadas por caminho relativo ao script.
 
+## Verificação de oficinas com Supabase
+
+O cadastro da oficina agora usa Supabase Auth, consulta de CNPJ no servidor e aprovação administrativa. Os estados são `pendente`, `em_verificacao`, `aprovada`, `rejeitada` e `bloqueada`. O banco controla o acesso; o usuário não pode alterar a própria aprovação.
+
+A área administrativa fica em `web/public/admin.html`. O site e o mobile listam somente oficinas aprovadas. A identidade visual e a barra inferior do mobile foram mantidas.
+
+**Ativação necessária:** antes de usar esta versão, aplique a migração, publique a Edge Function e autorize a conta administrativa. O envio ao GitHub não realiza essas ações no Supabase. Siga [Verificação de oficinas — instalação e operação](docs/VERIFICACAO_OFICINAS.md), incluindo a migração das oficinas antigas.
+
 ## Executar o mobile
 
 ```sh
@@ -40,31 +48,38 @@ O servidor acima não executa o backend Python. A configuração de banco, OAuth
 
 ## Executar o painel Qt
 
-Instale `PyQt5` e `supabase` em um ambiente virtual Python. O tema visual foi verificado com PyQt5 5.15.11.
+Instale as dependências em um ambiente virtual Python. O tema visual usa PyQt5 5.15.11.
 
 ```sh
-python qt/main.py
+python -m pip install -r qt/requirements.txt
+python main.py
 ```
+
+Também funciona `python qt/main.py`. Não use `python -m main.py`.
 
 É possível abrir os arquivos `qt/*.ui` no Qt Designer. A configuração do banco em `qt/database.py` deve corresponder ao ambiente e às políticas de acesso usadas pelo projeto.
 
-## Verificações desta atualização
+## Verificação do código
 
-- `npm ci`, `npm run build` e `npm run lint` do mobile.
-- Navegação das cinco abas, seleção ativa e acesso às avaliações no navegador.
-- Layout mobile em 360 e 390 px; site em 390 e 1280 px, sem rolagem horizontal nas páginas verificadas.
-- Carregamento das cinco janelas `.ui` com PyQt5 em ambiente gráfico virtual.
-- Sintaxe dos módulos Python e JavaScript.
+```sh
+npm ci
+npm test
+npm run check:edge
+python -m unittest discover -s tests -p "test_*.py"
+npm ci --prefix mobile
+npm run build --prefix mobile
+npm run lint --prefix mobile
+```
 
-## Limites atuais herdados dos projetos originais
+Os testes de banco executam a estrutura de referência, os scripts anteriores e a nova migração em PostgreSQL local via PGlite. Os testes de autenticação e CNPJ usam respostas simuladas. Não são alterações nem testes no projeto Supabase de produção.
 
-Esta atualização trata da identidade visual e da navegação. Não representa uma validação completa do banco ou da autenticação.
+## Limites atuais
 
-- O login mobile original navega diretamente para a tela inicial; o botão Google também navega sem executar OAuth.
-- Diversos componentes mobile esperam funções em `window.AutoFlowIntegration`, mas essa integração não é inicializada pelo projeto React. Há telas com dados de exemplo e gravações simuladas. `src/services/api.js` contém apenas parte dos acessos ao banco e não está conectado a todos os componentes.
-- A tela Serviços reorganiza o acompanhamento já disponível no dashboard. Não implementa uma nova solicitação de manutenção nem uma listagem completa do histórico.
-- O painel Qt original consulta a coluna `senha` da tabela `oficinas` e depende do esquema e das permissões configuradas. Migrar esse fluxo para autenticação apropriada é uma etapa separada.
-- Alguns botões do painel Qt e a busca não tinham lógica conectada no original. A atualização visual não adiciona esses módulos.
-- Os testes de layout do site desativaram scripts de dados para evitar acesso ao banco. Os testes de navegação mobile também não acessaram serviços de banco. Não houve criação de usuários, ordens de serviço nem alteração de dados reais.
+- O login/cadastro mobile e a listagem de oficinas usam o Supabase. Outros componentes ainda dependem de integrações parciais e têm exemplos herdados; o aplicativo completo ainda requer trabalho.
+- A revisão do vínculo do solicitante é humana. CNPJ ativo e e-mail confirmado, isoladamente, não comprovam representação da oficina.
+- A consulta de CNPJ depende da disponibilidade e cobertura da BrasilAPI. Uma falha não libera acesso.
+- Oficinas antigas precisam de conta Auth vinculada por um administrador e de revisão. A senha antiga da tabela não é reutilizada.
+- A criação de OS é atômica e limitada à oficina aprovada. O vínculo de atendimentos com contas de clientes existentes ainda precisa de um fluxo próprio de comprovação; não é feito por nome ou placa.
+- Alguns botões do Qt, a gestão de estoque e os campos de peças/valores da OS ainda não têm implementação completa.
 
-As chaves encontradas no código são do tipo publicável; arquivos `.env`, dependências instaladas e pastas de build não fazem parte do repositório. Permissões e políticas de acesso ao banco precisam ser revisadas antes de uso em produção.
+Consulte os detalhes e as regras de migração no [guia de verificação](docs/VERIFICACAO_OFICINAS.md). As chaves presentes nos clientes são publicáveis. Nunca configure uma chave secreta ou `service_role` no navegador, no mobile ou no Qt.

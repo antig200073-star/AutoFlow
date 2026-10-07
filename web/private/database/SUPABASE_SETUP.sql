@@ -1,3 +1,5 @@
+-- ATENÇÃO: script anterior à verificação de oficinas. Execute ANTES da migração
+-- supabase/migrations/20261007164947_workshop_verification.sql, nunca depois.
 -- =============================================================
 -- AUTOFLOW
 -- INTEGRAÇÃO DO BANCO EXISTENTE COM SUPABASE AUTH + RLS

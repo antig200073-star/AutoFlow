@@ -223,6 +223,7 @@ no navegador. Nunca coloque service_role aqui.
             const { data: workshops, error } = await db
                 .from("oficinas")
                 .select("id, nome, telefone, cep, logradouro, numero, bairro, cidade, estado")
+                .eq("status", "aprovada")
                 .order("nome");
 
             if (error) throw error;
