@@ -155,6 +155,7 @@ no navegador. Nunca coloque service_role aqui.
                 .from("tb_veiculo")
                 .select("id_veiculo, placa, marca, modelo, ano_do_modelo, km_atual")
                 .eq("cliente_id", client.id_cliente)
+                .is("excluido_em", null)
                 .order("id_veiculo", { ascending: false });
 
             if (error) throw error;
@@ -176,7 +177,7 @@ no navegador. Nunca coloque service_role aqui.
             if (!client) return null;
 
             const [vehiclesResult, servicesResult] = await Promise.all([
-                db.from("tb_veiculo").select("id_veiculo", { count: "exact", head: true }).eq("cliente_id", client.id_cliente),
+                db.from("tb_veiculo").select("id_veiculo", { count: "exact", head: true }).eq("cliente_id", client.id_cliente).is("excluido_em", null),
                 db.from("ordens_servico")
                     .select("id, status, data_entrada, veiculo_id, tb_veiculo(marca, modelo)")
                     .eq("cliente_id", client.id_cliente)

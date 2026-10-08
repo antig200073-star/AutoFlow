@@ -63,4 +63,24 @@ test('foto privada, cadastro autenticado e repetição idempotente no PostgreSQL
     assert.equal((await db.query('select * from storage.objects')).rows.length,0);
     await assert.rejects(register(),/permission denied/);
   },'anon');
+  const removal=await readFile(new URL('../supabase/migrations/20261008181706_vehicle_removal.sql',import.meta.url),'utf8');
+  await db.exec(removal); await db.exec(removal);
+  const vehicleId=(await db.query("select id_veiculo from tb_veiculo where placa='ABC1234'")).rows[0].id_veiculo;
+  await db.exec('create table history(id bigint primary key,vehicle_id bigint references tb_veiculo);');
+  await db.query('insert into history values(1,$1)',[vehicleId]);
+  await asUser(other,()=>assert.rejects(db.query('select remove_my_vehicle($1)',[vehicleId]),/não encontrado/));
+  await asUser('',()=>assert.rejects(db.query('select remove_my_vehicle($1)',[vehicleId]),/permission denied/),'anon');
+  await asUser(uid,async()=>{
+    await db.query('select remove_my_vehicle($1)',[vehicleId]);
+    await db.query('select remove_my_vehicle($1)',[vehicleId]);
+    assert.equal((await db.query('select id_veiculo from tb_veiculo where id_veiculo=$1 and excluido_em is null',[vehicleId])).rows.length,0);
+    await assert.rejects(db.query('delete from tb_veiculo where id_veiculo=$1',[vehicleId]),/permission denied/);
+    const nextPhoto=photo.replace('11111111.jpg','22222222.jpg');
+    await db.query("insert into storage.objects values('vehicle-photos',$1)",[nextPhoto]);
+    const replacement=(await db.query("select register_vehicle_with_photo('ABC1234','Fiat','Uno',2020,500,$1) as v",[nextPhoto])).rows[0].v;
+    assert.notEqual(replacement.id_veiculo,vehicleId);
+  });
+  assert.equal((await db.query('select vehicle_id from history')).rows[0].vehicle_id,vehicleId);
+  assert.equal((await db.query("select count(*)::int as n from storage.objects where name=$1",[photo])).rows[0].n,1);
+
 });

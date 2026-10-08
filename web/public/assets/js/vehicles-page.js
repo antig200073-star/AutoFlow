@@ -1,4 +1,4 @@
-import {createVehicleService,vehicleError} from './vehicle-service.js';
+import {createVehicleService,vehicleError,vehicleRemovalPrompt,vehicleRemovalError} from './vehicle-service.js';
 import './vehicle-registration.js';
 
 const list=document.getElementById('vehicle-list');
@@ -7,6 +7,7 @@ const registration=document.querySelector('autoflow-vehicle-registration');
 const node=(tag,text,className)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;if(className)el.className=className;return el;};
 let vehicles=[];
 let revision=0;
+let removing=false;
 function render() {
   list.replaceChildren();
   if(!vehicles.length){list.append(node('p','Nenhum veículo cadastrado. Use o botão para adicionar seu primeiro veículo.','empty-state'));return;}
@@ -19,10 +20,27 @@ function render() {
     for(const [label,value] of [['Placa',vehicle.placa],['Ano',vehicle.ano??'Não informado'],['Quilometragem',vehicle.km_atual==null?'Não informada':`${Number(vehicle.km_atual).toLocaleString('pt-BR')} km`]]) {
       const item=node('div');item.append(node('dt',label),node('dd',String(value),label==='Placa'?'af-plate':''));dl.append(item);
     }
-    body.append(dl);card.append(body);list.append(card);
+    const remove=node('button','Excluir veículo','af-delete-vehicle');
+    remove.type='button';remove.disabled=removing;
+    remove.setAttribute('aria-label',`Excluir veículo ${vehicle.placa}`);
+    remove.onclick=()=>removeVehicle(vehicle);
+    body.append(dl,remove);card.append(body);list.append(card);
   }
 }
+async function removeVehicle(vehicle) {
+  if(removing || !window.confirm(vehicleRemovalPrompt(vehicle)))return;
+  removing=true;revision++;render();
+  document.getElementById('reload-vehicles').disabled=true;
+  message.classList.remove('error');message.textContent='Excluindo veículo…';
+  try {
+    await registration.service.remove(vehicle.id);
+    vehicles=vehicles.filter(v=>v.id!==vehicle.id);
+    message.textContent='Veículo excluído da sua lista. Histórico preservado.';
+  } catch(error) {message.textContent=vehicleRemovalError(error);message.classList.add('error');}
+  finally {removing=false;revision++;render();document.getElementById('reload-vehicles').disabled=false;}
+}
 async function load() {
+  if(removing)return;
   const current=++revision;
   message.textContent='';message.classList.remove('error');
   list.replaceChildren(node('p','Carregando veículos…','empty-state'));

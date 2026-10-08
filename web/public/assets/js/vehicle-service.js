@@ -16,6 +16,7 @@ export function validateVehicle(input) {
 
 export function vehicleError(error) {
   const message = String(error?.message || '');
+  if (/excluido_em|remove_my_vehicle/i.test(message)) return 'A exclusão de veículos precisa ser ativada no Supabase. Execute a migração vehicle_removal.';
   if (/schema cache|foto_path|register_vehicle_with_photo|Bucket not found/i.test(message)) return 'O cadastro com foto ainda precisa ser ativado no Supabase. Consulte o responsável pelo AutoFlow.';
   if (/JWT|session|token|not authenticated/i.test(message)) return 'Sua sessão expirou. Entre novamente.';
   if (/fetch|network|Failed to/i.test(message)) return 'Falha de conexão. Seus dados continuam nesta janela; tente salvar novamente.';
@@ -45,7 +46,7 @@ export function createVehicleService(db) {
   return {
     async list() {
       const { client } = await account();
-      const { data, error } = await db.from('tb_veiculo').select(FIELDS).eq('cliente_id',client.id_cliente).order('id_veiculo',{ascending:false});
+      const { data, error } = await db.from('tb_veiculo').select(FIELDS).eq('cliente_id',client.id_cliente).is('excluido_em',null).order('id_veiculo',{ascending:false});
       if (error) throw error;
       return Promise.all((data || []).map(present));
     },
@@ -72,6 +73,11 @@ export function createVehicleService(db) {
       capture.saved=true;
       return present(data);
     },
+    async remove(id) {
+      await account();
+      const { error } = await db.rpc('remove_my_vehicle', { p_vehicle_id: id });
+      if (error) throw error;
+    },
     async discard(capture) {
       // O banco proíbe excluir fotos já vinculadas, inclusive após retorno perdido.
       if (capture?.path && !capture.saved) {
@@ -79,4 +85,10 @@ export function createVehicleService(db) {
       }
     },
   };
+}
+
+export const vehicleRemovalPrompt = vehicle => `Excluir ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa}) da sua lista?\n\nO histórico de serviços será preservado.`;
+export function vehicleRemovalError(error) {
+  if (/fetch|network|Failed to/i.test(error?.message || '')) return 'Não foi possível confirmar a exclusão. Atualize a lista e tente novamente.';
+  return vehicleError(error);
 }

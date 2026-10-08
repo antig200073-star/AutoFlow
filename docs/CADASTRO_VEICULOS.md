@@ -33,3 +33,11 @@ Publique a nova versão do site e gere/publique o mobile (`cd mobile && npm ci &
 ## Verificação
 
 `npm test` valida dados obrigatórios, migração reaplicável, isolamento das fotos, bloqueio de inserção direta sem foto e repetição idempotente em PostgreSQL/PGlite, além dos testes existentes. `cd mobile && npm run build` verifica o build React. O fluxo visual foi exercitado no navegador com câmera e API simuladas; a câmera física e o projeto Supabase real devem ser conferidos após aplicar a migração e publicar.
+
+## Excluir veículo da lista
+
+Após a migração de fotos, execute `supabase/migrations/20261008181706_vehicle_removal.sql` no SQL Editor. Atualize/publice o site e o mobile juntos com esta migração.
+
+Cada cartão tem **Excluir veículo**, seguido de confirmação com modelo e placa. Cancelar não altera nada. Após confirmação do servidor, o cartão sai da lista e da contagem do painel. Em caso de erro, o cartão permanece e a mensagem permite tentar novamente.
+
+A exclusão é lógica (`excluido_em`): registros, fotos privadas, ordens de serviço e avaliações permanecem para consulta do histórico. Apenas o cliente vinculado pela sessão pode excluir seu veículo. Não há transferência automática de propriedade. Uma placa removida pode ser cadastrada novamente com uma nova foto; o histórico anterior continua no registro antigo.

@@ -12,3 +12,7 @@
 .af-vehicles-message.error { color:#a61f1f; background:#fbeaea; }
 .af-vehicles-retry { margin-top:10px; }
 @media(max-width:600px) { .af-vehicles-toolbar { align-items:stretch; flex-direction:column; gap:16px; } .af-vehicles-grid { grid-template-columns:minmax(0,1fr); } }
+
+.af-vehicle-body .af-delete-vehicle { margin-top:20px; min-height:44px; padding:10px 14px; border:1px solid #c62828; border-radius:8px; background:white; color:#a61f1f; cursor:pointer; font:inherit; font-size:14px; }
+.af-vehicle-body .af-delete-vehicle:hover { background:#fbeaea; }
+.af-vehicle-body .af-delete-vehicle:disabled { opacity:.5; cursor:wait; }
