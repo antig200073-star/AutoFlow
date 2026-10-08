@@ -1,4 +1,4 @@
-import { vehicleError } from './vehicle-service.mjs';
+import { vehicleError } from './vehicle-service.js';
 
 // Componente compartilhado: mesma câmera, validação e janela no HTML e React.
 if (globalThis.customElements && !customElements.get('autoflow-vehicle-registration')) {

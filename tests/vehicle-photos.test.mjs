@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { validateVehicle, createVehicleService } from '../web/public/assets/js/vehicle-service.mjs';
+import { validateVehicle, createVehicleService } from '../web/public/assets/js/vehicle-service.js';
 
 test('campos e foto obrigatórios antes de acessar o servidor', async () => {
   const input={placa:'abc-1234',marca:'Fiat',modelo:'Uno',ano:2020,km_atual:0};

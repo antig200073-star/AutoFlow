@@ -1,5 +1,5 @@
-import {createVehicleService,vehicleError} from './vehicle-service.mjs';
-import './vehicle-registration.mjs';
+import {createVehicleService,vehicleError} from './vehicle-service.js';
+import './vehicle-registration.js';
 
 const list=document.getElementById('vehicle-list');
 const message=document.getElementById('vehicles-message');

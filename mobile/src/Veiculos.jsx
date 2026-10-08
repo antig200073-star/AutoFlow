@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { vehicleService } from './services/api';
-import { vehicleError } from '../../web/public/assets/js/vehicle-service.mjs';
-import '../../web/public/assets/js/vehicle-registration.mjs';
+import { vehicleError } from '../../web/public/assets/js/vehicle-service.js';
+import '../../web/public/assets/js/vehicle-registration.js';
 import '../../web/public/assets/css/vehicles.css';
 
 export default function Veiculos() {

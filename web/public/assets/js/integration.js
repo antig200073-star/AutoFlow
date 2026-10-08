@@ -163,7 +163,7 @@ no navegador. Nunca coloque service_role aqui.
 
         async createVehicle(vehicle, capture) {
             try {
-                const { createVehicleService } = await import('./vehicle-service.mjs');
+                const { createVehicleService } = await import('./vehicle-service.js');
                 const saved = await createVehicleService(db).create(vehicle, capture);
                 return { success: true, message: "Veículo cadastrado com sucesso!", vehicle: saved };
             } catch (error) {

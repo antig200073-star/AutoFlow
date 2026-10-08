@@ -1,4 +1,4 @@
-import { createVehicleService } from '../../../web/public/assets/js/vehicle-service.mjs';
+import { createVehicleService } from '../../../web/public/assets/js/vehicle-service.js';
 import { supabase } from '../supabase';
 
 // Mapeamento de erros
