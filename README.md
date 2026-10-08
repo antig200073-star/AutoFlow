@@ -44,7 +44,7 @@ Sirva `web/public/` com um servidor local HTTP. Exemplo para visualizar a interf
 python -m http.server 8000 --directory web/public
 ```
 
-O servidor acima não executa o backend Python. A configuração de banco, OAuth e backend continua sendo necessária para validar os fluxos reais.
+O site acessa o Supabase diretamente e usa a Edge Function de cadastro de oficinas. Configure o banco e o OAuth conforme os guias em `docs/`. Para Apache/XAMPP, consulte [Publicação do site](web/README_SEGURANCA.md).
 
 ## Executar o painel Qt
 

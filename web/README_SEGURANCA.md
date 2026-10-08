@@ -1,32 +1,26 @@
-# AutoFlow — arquitetura organizada e segura
+# Publicação do site AutoFlow
 
-## O que vai para o Apache/XAMPP
-Use **somente a pasta `public/` como conteúdo público**.
+Sirva somente `web/public/`. No Apache/XAMPP, copie seu conteúdo para `htdocs/AutoFlow/` ou configure essa pasta como raiz pública. Para testes locais, execute na raiz do repositório:
 
-Arquivos públicos:
-- HTML das telas
-- `assets/css/style.css`
-- `assets/js/script.js`
-- `assets/js/integration.js`
+```sh
+python -m http.server 8000 --directory web/public
+```
 
-A chave `sb_publishable_...` presente no JavaScript é uma **chave publicável do Supabase**. Ela não é uma senha de servidor. A proteção dos dados depende principalmente das políticas RLS. **Nunca** coloque `service_role`, senha de banco ou segredo administrativo no JavaScript/HTML.
+As interfaces acessam o Supabase. O painel Python está em `qt/`; não é necessário iniciar um backend Python para servir o site. Os scripts de banco ficam em `web/private/database/` e `supabase/migrations/`, fora da pasta pública. Preserve os arquivos `.htaccess`: eles contêm regras de publicação e proteção do Apache.
 
-## O que NÃO deve ficar acessível pela web
-A pasta `private/` contém backend Qt/Python, documentação e scripts SQL. Há um `.htaccess` que bloqueia o acesso, mas a melhor prática é manter `private/` fora do `htdocs` em produção.
+## Instalação e banco
 
-## Banco de dados
-Execute `private/database/SECURITY_HARDENING.sql` no SQL Editor do Supabase. Ele:
-- retira do usuário web a permissão de criar/alterar/apagar OS;
-- mantém somente a leitura das próprias OS;
-- impede escrita em oficinas pelo usuário comum;
-- remove a coluna `senha` de `tb_cli` se ela ainda existir.
+Siga os guias atuais, respeitando a ordem das migrações:
 
-## Qt Designer / sistema da oficina
-Não coloque uma chave `service_role` dentro de um executável Qt distribuído. Um usuário pode extrair a chave do programa. Para operações administrativas, prefira:
-1. usuário de oficina autenticado + RLS específica para perfil de oficina; ou
-2. uma API/Edge Function no servidor, onde o segredo administrativo fica fora do aplicativo.
+- [Verificação de oficinas, Auth, CNPJ e administração](../docs/VERIFICACAO_OFICINAS.md)
+- [Cadastro com foto e exclusão de veículos](../docs/CADASTRO_VEICULOS.md)
 
-## XAMPP
-Para teste simples, coloque `public/` dentro de `htdocs/AutoFlow/`.
-Exemplo: `C:\xampp\htdocs\AutoFlow\index.html`.
-Mantenha `private/` fora de `htdocs` quando possível.
+Não reaplique os scripts SQL antigos depois das migrações mais recentes. A configuração de permissões e RLS faz parte do funcionamento do sistema.
+
+## Login com Google
+
+Autorize no Supabase Auth a URL correspondente ao `callback.html` da instalação, por exemplo `http://localhost/AutoFlow/callback.html` no XAMPP. O código de retorno está em `public/assets/js/callback.js`; a integração principal está em `public/assets/js/integration.js`.
+
+## Chaves
+
+A chave publicável presente no JavaScript identifica o projeto. A proteção dos dados depende da autenticação e das políticas RLS. Chaves secretas ou `service_role` não devem ser colocadas no site, mobile nem no executável Qt. A Edge Function usa suas credenciais no ambiente do servidor, conforme o guia de verificação de oficinas.
