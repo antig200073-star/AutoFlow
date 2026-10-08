@@ -83,3 +83,7 @@ Os testes de banco executam a estrutura de referência, os scripts anteriores e 
 - Alguns botões do Qt, a gestão de estoque e os campos de peças/valores da OS ainda não têm implementação completa.
 
 Consulte os detalhes e as regras de migração no [guia de verificação](docs/VERIFICACAO_OFICINAS.md). As chaves presentes nos clientes são publicáveis. Nunca configure uma chave secreta ou `service_role` no navegador, no mobile ou no Qt.
+
+### Cadastro de veículos com foto
+
+Site e mobile oferecem **Cadastrar veículo → câmera e formulário → cartão na lista**, com gravação autenticada no Supabase. Para ativar o armazenamento privado das fotos, siga [Cadastro de veículos](docs/CADASTRO_VEICULOS.md) e execute a nova migração indicada antes de usar esta versão.

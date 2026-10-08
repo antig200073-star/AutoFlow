@@ -161,23 +161,11 @@ no navegador. Nunca coloque service_role aqui.
             return (data || []).map(vehicleToUI);
         },
 
-        async createVehicle(vehicle) {
+        async createVehicle(vehicle, capture) {
             try {
-                const client = await requireClient();
-                const { data, error } = await db
-                    .from("tb_veiculo")
-                    .insert({
-                        placa: vehicle.placa,
-                        marca: vehicle.marca,
-                        modelo: vehicle.modelo,
-                        ano_do_modelo: vehicle.ano,
-                        cliente_id: client.id_cliente
-                    })
-                    .select("id_veiculo, placa, marca, modelo, ano_do_modelo")
-                    .single();
-
-                if (error) throw error;
-                return { success: true, message: "Veículo cadastrado com sucesso!", vehicle: vehicleToUI(data) };
+                const { createVehicleService } = await import('./vehicle-service.mjs');
+                const saved = await createVehicleService(db).create(vehicle, capture);
+                return { success: true, message: "Veículo cadastrado com sucesso!", vehicle: saved };
             } catch (error) {
                 return { success: false, message: friendlyError(error) };
             }

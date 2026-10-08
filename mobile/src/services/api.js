@@ -1,3 +1,4 @@
+import { createVehicleService } from '../../../web/public/assets/js/vehicle-service.mjs';
 import { supabase } from '../supabase';
 
 // Mapeamento de erros
@@ -70,43 +71,7 @@ export async function fetchApprovedWorkshops() {
   }));
 }
 
-// Veículos
-export async function fetchVehicles() {
-  const client = await getCurrentClient();
-  if (!client) return [];
-
-  const { data, error } = await supabase
-    .from("tb_veiculo")
-    .select("id_veiculo, placa, marca, modelo, ano_do_modelo")
-    .eq("cliente_id", client.id_cliente)
-    .order("id_veiculo", { ascending: false });
-
-  if (error) throw error;
-  return (data || []).map(row => ({
-    id: row.id_veiculo,
-    marca: row.marca || "",
-    modelo: row.modelo || "",
-    placa: row.placa || "",
-    ano: row.ano_do_modelo || ""
-  }));
-}
-
-export async function createVehicle(vehicle) {
-  const client = await getCurrentClient();
-  if (!client) return { success: false, message: "Usuário não encontrado." };
-
-  const { data, error } = await supabase
-    .from("tb_veiculo")
-    .insert({
-      placa: vehicle.placa,
-      marca: vehicle.marca,
-      modelo: vehicle.modelo,
-      ano_do_modelo: vehicle.ano,
-      cliente_id: client.id_cliente
-    })
-    .select("id_veiculo, placa, marca, modelo, ano_do_modelo")
-    .single();
-
-  if (error) return { success: false, message: friendlyError(error) };
-  return { success: true, vehicle: data };
-}
+// Mesmo cadastro com foto utilizado pelo site.
+export const vehicleService = createVehicleService(supabase);
+export const fetchVehicles = () => vehicleService.list();
+export const createVehicle = (vehicle, capture) => vehicleService.create(vehicle, capture);

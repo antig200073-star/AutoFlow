@@ -8,6 +8,7 @@
     <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
     <title>Veículos</title>
     <link rel="stylesheet" href="assets/css/identity.css?v=1">
+    <link rel="stylesheet" href="assets/css/vehicles.css">
 </head>
 
 <body>
@@ -40,90 +41,15 @@
     </header>
 
 
-    <section class="vehicles-section">
-
-    <h2>Veículos cadastrados</h2>
-
-    <div id="vehicle-list">
-        <p class="empty-state">Carregando veículos...</p>
-    </div>
-
-</section>
-
-
-    <section class="vehicle-form-section">
-
-        <h2>Cadastrar veículo</h2>
-
-        <form id="vehicle-form">
-
-            <div class="form-grid">
-
-                <div class="form-group">
-                    <label for="modelo">Modelo</label>
-
-                    <input
-                        type="text"
-                        id="modelo"
-                        name="modelo"
-                        required
-                    >
-                </div>
-
-
-                <div class="form-group">
-                    <label for="marca">Marca</label>
-
-                    <input
-                        type="text"
-                        id="marca"
-                        name="marca"
-                        required
-                    >
-                </div>
-
-
-                <div class="form-group">
-                    <label for="placa">Placa</label>
-
-                    <input
-                        type="text"
-                        id="placa"
-                        name="placa"
-                        maxlength="7"
-                        placeholder="ABC1D23"
-                        required
-                    >
-                </div>
-
-
-                <div class="form-group">
-                    <label for="ano">Ano</label>
-
-                    <input
-                        type="number"
-                        id="ano"
-                        name="ano"
-                        min="1900"
-                        required
-                    >
-                </div>
-
-            </div>
-
-            <button type="submit">
-                Cadastrar veículo
-            </button>
-
-            <p id="vehicle-message" class="form-message" aria-live="polite"></p>
-
-        </form>
-
+    <section aria-label="Veículos cadastrados">
+      <div class="af-vehicles-toolbar"><h2>Veículos cadastrados</h2><div><button id="reload-vehicles" class="secondary" type="button">Atualizar</button> <button id="add-vehicle" type="button">Cadastrar veículo</button></div></div>
+      <p id="vehicles-message" class="af-vehicles-message" role="status"></p>
+      <div id="vehicle-list" class="af-vehicles-grid"></div>
     </section>
-
+    <autoflow-vehicle-registration></autoflow-vehicle-registration>
 </main>
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
 <script src="assets/js/integration.js?v=9"></script>
-<script src="assets/js/script.js?v=9"></script>
+<script type="module" src="assets/js/vehicles-page.mjs"></script>
 </body>
 </html>

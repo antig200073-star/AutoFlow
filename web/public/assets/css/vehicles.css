@@ -1,0 +1,14 @@
+.af-vehicles-toolbar { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:26px; }
+.af-vehicles-toolbar h2 { margin:0 0 6px; } .af-vehicles-toolbar p { margin:0; color:#586171; }
+.af-vehicles-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:22px; }
+.af-vehicle-card { overflow:hidden; border-radius:14px; border:1px solid #d7dbe0; background:#fff; color:#16181d; }
+.af-vehicle-card img { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#e9ecf0; }
+.af-vehicle-no-photo { aspect-ratio:16/10; display:grid; place-items:center; color:#586171; background:#e9ecf0; padding:20px; font-size:14px; }
+.af-vehicle-body { padding:20px; } .af-vehicle-body h3 { margin:0 0 18px; font-size:20px; color:#16181d; }
+.af-vehicle-body dl { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0; }
+.af-vehicle-body dt { font-size:12px; color:#586171; margin-bottom:5px; } .af-vehicle-body dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+.af-vehicle-body .af-plate { display:inline-block; letter-spacing:1px; border:1px solid #d7dbe0; padding:4px 8px; border-radius:5px; font-family:monospace; }
+.af-vehicles-message { color:#586171; line-height:1.5; } .af-vehicles-message:not(:empty) { padding:12px 16px; border-radius:8px; background:#e9ecf0; margin-bottom:20px; }
+.af-vehicles-message.error { color:#a61f1f; background:#fbeaea; }
+.af-vehicles-retry { margin-top:10px; }
+@media(max-width:600px) { .af-vehicles-toolbar { align-items:stretch; flex-direction:column; gap:16px; } .af-vehicles-grid { grid-template-columns:minmax(0,1fr); } }
