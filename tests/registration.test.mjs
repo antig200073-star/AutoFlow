@@ -60,3 +60,27 @@ test('reconsulta exige administrador atual e falha interna não vaza segredos',a
   const response=await handler(request({}));
   assert.equal(response.status,500); assert.ok(!(await response.text()).includes('secret-internal'));
 });
+
+
+test('cadastro demonstrativo só é permitido a administradores e nunca aprova automaticamente',async () => {
+  const denied = fixture({role:false});
+  const r1 = await denied.handler(request({action:'register_demo',cnpj:'00.000.000/0000-01'}));
+  assert.equal(r1.status,403);
+  assert.equal(denied.writes.length,0);
+
+  const allowed = fixture({role:true});
+  const r2 = await allowed.handler(request({action:'register_demo',cnpj:'00.000.000/0000-01',status:'aprovada'}));
+  assert.equal(r2.status,201);
+  assert.equal(allowed.writes[0].cnpj,'00000000000001');
+  assert.match(allowed.writes[0].nome,/^\\[TESTE\\]/);
+  assert.equal(allowed.writes[0].status,'pendente');
+  assert.equal(allowed.writes[0].verificacao_fonte,'AUTOFLOW_DEMO');
+});
+
+test('modo de demonstração rejeita CNPJs fora da faixa reservada',async () => {
+  for(const cnpj of ['11.222.333/0001-81','00.000.000/0000-00','00.000.000/0001-01']) {
+    const f = fixture({role:true});
+    assert.equal((await f.handler(request({action:'register_demo',cnpj}))).status,422);
+    assert.equal(f.writes.length,0);
+  }
+});
