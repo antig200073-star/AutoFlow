@@ -26,10 +26,12 @@ def require_approved(client):
 
 
 def register_workshop(client, cnpj):
+    normalized = ''.join(ch for ch in cnpj if ch.isalnum()).upper()
+    demo = len(normalized) == 14 and normalized[:12] == '000000000000' and normalized[-2:].isdigit() and normalized[-2:] != '00'
     # Nunca envia senha, status, user_id, situação cadastral ou dados empresariais
     # escolhidos pelo usuário. A função resolve tudo no servidor.
     try:
-        result = client.functions.invoke("register-workshop", invoke_options={"body": {"cnpj": cnpj}})
+        result = client.functions.invoke("register-workshop", invoke_options={"body": {"cnpj": cnpj, "action": "register_demo" if demo else "register"}})
     except Exception as error:
         # supabase-functions 2.x expõe a mensagem JSON da Edge Function em .message.
         if getattr(error, "name", None) == "FunctionsHttpError":
