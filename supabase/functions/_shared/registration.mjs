@@ -1,4 +1,24 @@
-import { lookupCompany, RegistrationError } from './cnpj.mjs';
+import { lookupCompany, normalizeCnpj, RegistrationError } from './cnpj.mjs';
+
+// CNPJs impossíveis reservados para demonstrações do TCC, nunca consultados na Receita.
+// Esta opção só pode ser usada por quem consta em autoflow_admins, após autenticação.
+export function demoCompany(input) {
+  const cnpj = normalizeCnpj(input);
+  if (!/^000000000000(0[1-9]|[1-9][0-9])$/.test(cnpj)) {
+    throw new RegistrationError('No modo de teste, use 00.000.000/0000-01 até 00.000.000/0000-99.');
+  }
+  const number = cnpj.slice(-2);
+  return {
+    cnpj,
+    nome: `[TESTE] Oficina AutoFlow ${number}`,
+    razao_social: '[TESTE] EMPRESA FICTÍCIA PARA DEMONSTRAÇÃO DO TCC',
+    situacao_cadastral: 2, // Apenas valor simulado; verificacao_fonte marca a ausência de consulta real.
+    cnaes: [{ codigo: '4520001', descricao: 'SIMULADO - manutenção automotiva' }],
+    telefone: '00000000000', cep: '00000000',
+    logradouro: 'Endereço fictício - não visitar', numero: '0',
+    bairro: 'DEMONSTRAÇÃO', cidade: 'Santo André', estado: 'SP',
+  };
+}
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -44,8 +64,9 @@ return async function handler(request) {
       const quota = await admin.rpc('consume_workshop_lookup', { p_user: user.id });
       if (quota.error) throw new Error('Falha ao verificar limite');
       if (!quota.data) return json({ error: 'Limite de consultas atingido. Tente novamente em uma hora.' }, 429);
-      const { data: workshop, error } = await admin.from('oficinas').select('id, cnpj, revisao').eq('id', input.oficina_id).single();
+      const { data: workshop, error } = await admin.from('oficinas').select('id, cnpj, revisao, verificacao_fonte').eq('id', input.oficina_id).single();
       if (error || !workshop) return json({ error: 'Oficina não encontrada.' }, 404);
+      if (workshop.verificacao_fonte === 'AUTOFLOW_DEMO') return json({ error: 'Oficina fictícia: não há consulta real de CNPJ para atualizar.' }, 409);
       const company = await lookup(workshop.cnpj);
       const { error: saveError } = await admin.rpc('refresh_workshop_verification', {
         p_id: workshop.id, p_actor: user.id, p_revision: workshop.revisao, p_company: company,
@@ -53,19 +74,25 @@ return async function handler(request) {
       if (saveError) return json({ error: 'A oficina foi alterada. Atualize a lista e tente novamente.' }, 409);
       return json({ success: true });
     }
-    if (input.action && input.action !== 'register') return json({ error: 'Ação inválida.' }, 400);
+    if (input.action && !['register', 'register_demo'].includes(input.action)) return json({ error: 'Ação inválida.' }, 400);
+    const demoMode = input.action === 'register_demo';
+    if (demoMode) {
+      const { data: role, error: roleError } = await userClient.from('autoflow_admins')
+        .select('user_id').eq('user_id', user.id).maybeSingle();
+      if (roleError || !role) return json({ error: 'O modo de teste está restrito a administradores do AutoFlow.' }, 403);
+    }
     const { data: existing, error: existingError } = await admin.from('oficinas').select('id').eq('user_id', user.id).maybeSingle();
     if (existingError) throw new Error('Falha ao verificar cadastro');
     if (existing) return json({ error: 'Sua conta já possui uma oficina. Consulte o status no painel.' }, 409);
     const quota = await admin.rpc('consume_workshop_lookup', { p_user: user.id });
     if (quota.error) throw new Error('Falha ao verificar limite');
     if (!quota.data) return json({ error: 'Limite de consultas atingido. Tente novamente em uma hora.' }, 429);
-    const company = await lookup(input.cnpj);
+    const company = demoMode ? demoCompany(input.cnpj) : await lookup(input.cnpj);
     if (company.situacao_cadastral !== 2) throw new RegistrationError('O CNPJ precisa estar ATIVO na Receita Federal para solicitar cadastro.');
     const { data, error } = await admin.from('oficinas').insert({
       ...company, user_id: user.id, email: user.email,
       status: 'pendente', verificado_em: new Date().toISOString(),
-      verificacao_fonte: 'BrasilAPI',
+      verificacao_fonte: demoMode ? 'AUTOFLOW_DEMO' : 'BrasilAPI',
     }).select('id, status').single();
     if (error?.code === '23505') return json({ error: 'CNPJ ou conta já cadastrados. Solicite revisão à administração; não é permitido assumir um cadastro existente.' }, 409);
     if (error) throw new Error('Falha ao gravar cadastro');
