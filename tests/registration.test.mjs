@@ -4,15 +4,19 @@ import { createHandler } from '../supabase/functions/_shared/registration.mjs';
 
 function fixture({ user = { id: 'real-user', email: 'owner@example.test', email_confirmed_at: '2026-10-07' },
   company = { cnpj: '11222333000181', nome: 'Oficina Real', situacao_cadastral: 2 }, role = false,
-  quota = true, duplicate = false, exists = false } = {}) {
+  quota = true, duplicate = false, exists = false, demoTester = false } = {}) {
   const writes = []; const calls = [];
   const userClient = {
     auth: { getUser: async token => { calls.push(token); return { data: { user }, error: user ? null : Error() }; } },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: role ? {user_id:user.id} : null }) }) }) }),
   };
   const adminClient = {
-    from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: exists ? { id: 1 } : null }), single: async () => ({ data: {id:1,cnpj:company.cnpj,revisao:0} }) }) }),
+    from: table => ({
+      select: () => ({ eq: () => ({
+        maybeSingle: async () => ({ data: table === 'autoflow_demo_testers'
+          ? (demoTester ? {user_id:user.id} : null) : (exists ? {id:1} : null), error: null }),
+        single: async () => ({ data: {id:1,cnpj:company.cnpj,revisao:0} }),
+      }) }),
       insert: payload => { writes.push(payload); return { select: () => ({ single: async () => ({ data: { id:1,status:'pendente' }, error: duplicate ? {code:'23505'} : null }) }) }; },
     }),
     rpc: async name => ({ data: name === 'consume_workshop_lookup' ? quota : null }),
@@ -62,7 +66,7 @@ test('reconsulta exige administrador atual e falha interna não vaza segredos',a
 });
 
 
-test('cadastro demonstrativo só é permitido a administradores e nunca aprova automaticamente',async () => {
+test('cadastro demonstrativo só é permitido a administradores ou testadores autorizados e nunca aprova automaticamente',async () => {
   const denied = fixture({role:false});
   const r1 = await denied.handler(request({action:'register_demo',cnpj:'00.000.000/0000-01'}));
   assert.equal(r1.status,403);
@@ -83,4 +87,13 @@ test('modo de demonstração rejeita CNPJs fora da faixa reservada',async () => 
     assert.equal((await f.handler(request({action:'register_demo',cnpj}))).status,422);
     assert.equal(f.writes.length,0);
   }
+});
+
+test('testador autorizado pode cadastrar somente demonstração, sem virar administrador',async () => {
+  const f = fixture({demoTester:true,role:false});
+  const accepted = await f.handler(request({action:'register_demo',cnpj:'00.000.000/0000-02',status:'aprovada'}));
+  assert.equal(accepted.status,201);
+  assert.equal(f.writes[0].status,'pendente');
+  assert.equal(f.writes[0].verificacao_fonte,'AUTOFLOW_DEMO');
+  assert.equal((await f.handler(request({action:'refresh',oficina_id:1}))).status,403);
 });
