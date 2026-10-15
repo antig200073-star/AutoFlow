@@ -22,11 +22,20 @@ class WorkshopAuthTests(unittest.TestCase):
                 require_approved(self.client_for(status))
         self.assertEqual(require_approved(self.client_for("aprovada"))["id"], 1)
 
+    def test_demo_mode_uses_reserved_action(self):
+        client = Mock()
+        client.functions.invoke.return_value = json.dumps({"success": True}).encode()
+        register_workshop(client, "00.000.000/0000-01")
+        client.functions.invoke.assert_called_once_with(
+            "register-workshop",
+            invoke_options={"body": {"cnpj": "00.000.000/0000-01", "action": "register_demo"}}
+        )
+
     def test_registration_sends_only_cnpj_and_requires_confirmation(self):
         client = Mock()
         client.functions.invoke.return_value = json.dumps({"success": True}).encode()
         register_workshop(client, "11222333000181")
-        client.functions.invoke.assert_called_once_with("register-workshop", invoke_options={"body": {"cnpj": "11222333000181"}})
+        client.functions.invoke.assert_called_once_with("register-workshop", invoke_options={"body": {"cnpj": "11222333000181", "action": "register"}})
         client.functions.invoke.return_value = b'{"error":"CNPJ inativo"}'
         with self.assertRaisesRegex(ValueError, "inativo"):
             register_workshop(client, "11222333000181")
