@@ -1,7 +1,6 @@
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qt"))
 from order_rows import order_row_values, format_entry_date
@@ -21,7 +20,7 @@ class OrderTableTests(unittest.TestCase):
         self.assertEqual(len(cols), 7)
         self.assertEqual(cols[:6], ["1", "ABC1234", "Celta 1.0", "Cliente de Teste",
                                     "Motor falhando", "Em Diagnóstico"])
-        self.assertRegex(cols[6], r"^\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}$")
+        self.assertRegex(cols[6], r"^\d{2}/\d{2}/\d{4} \d{2}:\d{2}$")
 
     def test_missing_fields_are_safe(self):
         self.assertEqual(order_row_values({})[:6], ["—"] * 6)
