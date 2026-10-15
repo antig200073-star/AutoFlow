@@ -79,7 +79,15 @@ return async function handler(request) {
     if (demoMode) {
       const { data: role, error: roleError } = await userClient.from('autoflow_admins')
         .select('user_id').eq('user_id', user.id).maybeSingle();
-      if (roleError || !role) return json({ error: 'O modo de teste está restrito a administradores do AutoFlow.' }, 403);
+      if (roleError) throw new Error('Falha ao verificar autorização administrativa');
+      if (!role) {
+        // A tabela só concede SELECT à chave secreta do servidor.
+        // Um testador não se torna administrador e não pode conceder acesso a si mesmo.
+        const { data: tester, error: testerError } = await admin.from('autoflow_demo_testers')
+          .select('user_id').eq('user_id', user.id).maybeSingle();
+        if (testerError) throw new Error('Falha ao verificar permissão de demonstração');
+        if (!tester) return json({ error: 'Sua conta não está autorizada para cadastrar oficinas fictícias.' }, 403);
+      }
     }
     const { data: existing, error: existingError } = await admin.from('oficinas').select('id').eq('user_id', user.id).maybeSingle();
     if (existingError) throw new Error('Falha ao verificar cadastro');
