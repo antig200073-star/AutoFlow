@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem, QHeaderView
 from datetime import date
 from pathlib import Path
 from PyQt5.QtGui import QIcon, QPixmap
@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent
 # Importa a conexão configurada no arquivo database.py
 from database import supabase
 from workshop_auth import current_workshop, require_approved, register_workshop, STATUS_MESSAGES
+from order_rows import order_row_values
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -143,6 +144,48 @@ def efetuar_login():
 # ==========================================
 # tela principal
 # ==========================================
+def carregar_ordens_na_tabela():
+    """Carrega as O.S. da oficina autenticada, com cliente e veículo vinculados."""
+    response = (
+        supabase.table("ordens_servico")
+        .select(
+            "id,status,descricao_problema,data_entrada,"
+            "tb_veiculo!ordens_servico_veiculo_id_fkey(placa,marca,modelo),"
+            "tb_cli!ordens_servico_cliente_id_fkey(nome)"
+        )
+        .eq("oficina_id", oficina_logada["id"])
+        .order("id", desc=True)
+        .limit(200)
+        .execute()
+    )
+
+    grid = form_prin.gridOS
+    grid.setSortingEnabled(False)
+    grid.setRowCount(0)
+    for order in response.data or []:
+        row_index = grid.rowCount()
+        grid.insertRow(row_index)
+        for column, value in enumerate(order_row_values(order)):
+            cell = QTableWidgetItem(str(value))
+            cell.setFlags(cell.flags() & ~Qt.ItemIsEditable)
+            cell.setToolTip(str(value))
+            grid.setItem(row_index, column, cell)
+    grid.setSortingEnabled(True)
+    filtrar_ordens(form_prin.txtBuscar.text())
+
+
+def filtrar_ordens(texto):
+    """Filtra as colunas carregadas sem enviar consultas a cada tecla."""
+    termo = (texto or "").strip().casefold()
+    grid = form_prin.gridOS
+    for linha in range(grid.rowCount()):
+        campos = [
+            (grid.item(linha, coluna).text() if grid.item(linha, coluna) else "")
+            for coluna in range(grid.columnCount())
+        ]
+        grid.setRowHidden(linha, termo not in " ".join(campos).casefold())
+
+
 def carregar_dashboard():
     if not acesso_aprovado():
         return False
@@ -181,9 +224,11 @@ def carregar_dashboard():
             .execute()
         qtd_concluidas = res_concluidas.count if res_concluidas.count is not None else 0
         form_prin.lblV4.setText(str(qtd_concluidas))
+        carregar_ordens_na_tabela()
         return True
 
     except Exception as erro:
+        print("Falha ao carregar dashboard / ordens:", repr(erro), file=sys.stderr)
         status_label.setText("Não foi possível carregar o painel.")
         status_detail.setText("Confira sua conexão e atualize o status para tentar novamente.")
         form_prin.close()
@@ -271,6 +316,11 @@ form_cad.btnVoltar.clicked.connect(tela_login)
 form_prin.btnNovaOS.clicked.connect(abrir_cad_os)
 form_prin.btnNovoVeiculo.clicked.connect(abrir_veipatio)
 form_prin.btnSair.clicked.connect(tela_login)
+form_prin.txtBuscar.textChanged.connect(filtrar_ordens)
+form_prin.gridOS.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+form_prin.gridOS.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+for coluna, largura in {0: 75, 1: 95, 2: 140, 3: 145, 5: 110, 6: 130}.items():
+    form_prin.gridOS.setColumnWidth(coluna, largura)
 
 # Eventos - Cadastro de O.S. (t_lcadOs.ui)
 form_cad_os.btnSalvarOS.clicked.connect(salvar_ordem_servico)
