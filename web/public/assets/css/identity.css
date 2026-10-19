@@ -45,3 +45,28 @@ input::placeholder, textarea::placeholder { color: #586171; }
 :focus-visible { outline: 3px solid #2058A5; outline-offset: 3px; }
 @media (max-width: 760px) { body:not(.login-page) main { padding: 24px 16px; } aside nav ul { display: flex; flex-wrap: wrap; gap: 4px; } aside nav li { margin: 0; } aside nav a { padding: 10px 12px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+
+/* Campos legíveis também durante o foco: sobrepõe o tema escuro legado. */
+body:not(.login-page) .form-group input:not([type="hidden"]),
+body:not(.login-page) .form-group select,
+body:not(.login-page) .form-group textarea {
+  background: #FFFFFF;
+  color: #16181D;
+  caret-color: #16181D;
+  border-color: #BFC5CE;
+}
+body:not(.login-page) .form-group input:focus,
+body:not(.login-page) .form-group select:focus,
+body:not(.login-page) .form-group textarea:focus {
+  background: #FFFFFF;
+  color: #16181D;
+  caret-color: #16181D;
+  border-color: #C62828;
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15);
+}
+body:not(.login-page) .form-group input::placeholder,
+body:not(.login-page) .form-group textarea::placeholder {
+  color: #586171;
+  opacity: 1;
+}
