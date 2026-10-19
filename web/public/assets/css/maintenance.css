@@ -1,0 +1,5 @@
+/* Regras adicionais do acompanhamento. O CSS principal do AutoFlow é preservado. */
+.maintenance-list { display: grid; gap: 18px; }
+.maintenance-list > .maintenance-card { margin-top: 0; }
+.maintenance-list > .empty-state { margin-top: 16px; }
+.maintenance-card h3 { overflow-wrap: anywhere; }
