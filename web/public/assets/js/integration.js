@@ -441,27 +441,43 @@ no navegador. Nunca coloque service_role aqui.
                 const user = await currentUser();
                 if (!user) return { success: false, message: "Faça login para editar o perfil." };
 
-                if (profile.email && profile.email !== user.email) {
-                    const { error: authError } = await db.auth.updateUser({ email: profile.email });
-                    if (authError) throw authError;
-                }
+                const nome = String(profile.nome || "").trim();
+                const novoEmail = String(profile.email || "").trim().toLowerCase();
+                const telefone = String(profile.telefone || "").trim();
+                if (!nome || !novoEmail) return { success: false, message: "Informe nome e e-mail válidos." };
 
+                // Alterações de e-mail podem exigir confirmação. Não gravar um novo
+                // endereço na tabela de clientes antes de ele ser confirmado no Auth.
+                const emailAtual = (user.email || "").toLowerCase();
+                const emailPendente = novoEmail !== emailAtual;
                 const { data, error } = await db
                     .from("tb_cli")
                     .update({
-                        nome: profile.nome,
-                        email: profile.email,
-                        num_tel: profile.telefone || null
+                        nome,
+                        email: user.email,
+                        num_tel: telefone || null
                     })
                     .eq("auth_user_id", user.id)
                     .select("nome, email, num_tel")
                     .single();
                 if (error) throw error;
 
+                if (emailPendente) {
+                    const { error: authError } = await db.auth.updateUser({ email: novoEmail });
+                    if (authError) {
+                        return {
+                            success: false,
+                            message: "Nome e telefone atualizados, mas não foi possível solicitar a troca do e-mail: " + friendlyError(authError)
+                        };
+                    }
+                }
+
                 return {
                     success: true,
-                    message: "Perfil atualizado com sucesso!",
-                    profile: { nome: data.nome, email: data.email, telefone: data.num_tel || "" }
+                    message: emailPendente
+                        ? "Nome e telefone salvos. Confirme a alteração do e-mail pelo link enviado pelo Supabase antes de usar o novo endereço."
+                        : "Perfil atualizado com sucesso!",
+                    profile: { nome: data.nome, email: user.email || data.email, telefone: data.num_tel || "" }
                 };
             } catch (error) {
                 return { success: false, message: friendlyError(error) };
