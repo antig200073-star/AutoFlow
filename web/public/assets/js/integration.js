@@ -265,6 +265,25 @@ no navegador. Nunca coloque service_role aqui.
             });
         },
 
+        async loadWorkshopReviews(workshopId) {
+            const id = Number(workshopId);
+            if (!Number.isSafeInteger(id) || id <= 0) throw Error("Oficina inválida.");
+            const { data, error } = await db.rpc("workshop_public_reviews", { p_workshop_id: id });
+            if (error) throw error;
+            const reviews = (data || []).map(item => ({
+                id: item.id,
+                nota: Number(item.nota),
+                comentario: item.comentario || "",
+                data: item.created_at
+            }));
+            const total = reviews.length;
+            return {
+                reviews,
+                total,
+                average: total ? (reviews.reduce((sum, item) => sum + item.nota, 0) / total).toFixed(1) : null
+            };
+        },
+
         async loadFormOptions() {
             // Cada grupo é carregado separadamente. Assim, por exemplo, uma falha
             // ao consultar oficinas não apaga os veículos que foram carregados.
