@@ -88,11 +88,11 @@ no navegador. Nunca coloque service_role aqui.
     }
 
     const statusToUI = {
-        aguardando: "Recebido",
+        aguardando: "Aguardando Peça",
         em_analise: "Diagnóstico",
         em_manutencao: "Em Reparo",
         pronto: "Pronto para Retirada",
-        entregue: "Pronto para Retirada"
+        entregue: "Entregue"
     };
 
     window.AutoFlowIntegration = {
@@ -179,7 +179,7 @@ no navegador. Nunca coloque service_role aqui.
             const [vehiclesResult, servicesResult] = await Promise.all([
                 db.from("tb_veiculo").select("id_veiculo", { count: "exact", head: true }).eq("cliente_id", client.id_cliente).is("excluido_em", null),
                 db.from("ordens_servico")
-                    .select("id, status, data_entrada, veiculo_id, tb_veiculo(marca, modelo)")
+                    .select("id, status, data_entrada, veiculo_id, tb_veiculo(marca, modelo, placa)")
                     .eq("cliente_id", client.id_cliente)
                     .order("data_entrada", { ascending: false })
             ]);
@@ -188,10 +188,19 @@ no navegador. Nunca coloque service_role aqui.
             if (servicesResult.error) throw servicesResult.error;
 
             const services = servicesResult.data || [];
+            // A entrega encerra o acompanhamento; a O.S. permanece no histórico.
             const active = services.filter(item => item.status !== "entregue");
             const finished = services.filter(item => item.status === "entregue");
-            const latest = active[0] || services[0];
-            const vehicle = latest?.tb_veiculo;
+            const maintenances = active.map(order => {
+                const vehicle = order.tb_veiculo || {};
+                return {
+                    id: order.id,
+                    vehicleId: order.veiculo_id,
+                    vehicleName: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ") || vehicle.placa || "Veículo",
+                    plate: vehicle.placa || "",
+                    status: statusToUI[order.status] || "Status não informado"
+                };
+            });
 
             return {
                 dashboard: {
@@ -199,10 +208,9 @@ no navegador. Nunca coloque service_role aqui.
                     totalServices: active.length,
                     totalFinished: finished.length
                 },
-                maintenance: latest ? {
-                    vehicleName: [vehicle?.marca, vehicle?.modelo].filter(Boolean).join(" ") || "Veículo",
-                    status: statusToUI[latest.status] || "Recebido"
-                } : null
+                maintenances,
+                // Compatibilidade com a interface mobile anterior.
+                maintenance: maintenances[0] || null
             };
         },
 
