@@ -47,14 +47,34 @@ async function load() {
   try {const result=await registration.service.list();if(current!==revision)return;vehicles=result;render();}
   catch(error){if(current!==revision)return;list.replaceChildren();message.textContent=vehicleError(error);message.classList.add('error');}
 }
-if(window.AutoFlowSupabase) {
+const addButton = document.getElementById('add-vehicle');
+const reloadButton = document.getElementById('reload-vehicles');
+function showError(error) {
+  console.error('AutoFlow - cadastro de veículos:', error);
+  message.textContent = error instanceof Error ? vehicleError(error) : String(error);
+  message.classList.add('error');
+}
+if(window.AutoFlowSupabase && registration && typeof registration.open === 'function') {
   registration.service=createVehicleService(window.AutoFlowSupabase);
-  document.getElementById('add-vehicle').onclick=()=>registration.open();
-  document.getElementById('reload-vehicles').onclick=load;
+  addButton.addEventListener('click',()=>{
+    try {
+      message.textContent='';message.classList.remove('error');
+      registration.open();
+    } catch(error) {showError(error);}
+  });
+  reloadButton.addEventListener('click',()=>load());
   registration.addEventListener('vehicle-saved',event=>{
     revision++;
     vehicles=[event.detail,...vehicles.filter(v=>v.id!==event.detail.id)];render();
     message.classList.remove('error');message.textContent='Veículo cadastrado com sucesso!';
   });
   load();
-}else {message.textContent='Não foi possível conectar. Atualize a página.';message.classList.add('error');}
+}else {
+  addButton.addEventListener('click',()=>{
+    message.textContent='O cadastro de veículos não foi carregado. Verifique a conexão e atualize a página.';
+    message.classList.add('error');
+  });
+  reloadButton.addEventListener('click',()=>window.location.reload());
+  message.textContent='Falha ao iniciar o formulário de veículos. Atualize a página ou verifique o console do navegador.';
+  message.classList.add('error');
+}
