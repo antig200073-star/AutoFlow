@@ -335,22 +335,44 @@
         }
     }
 
-    function renderMaintenance(data = {}) {
-        const vehicleName = document.querySelector("#maintenance-vehicle-name");
-        const statusElement = document.querySelector("#maintenance-status");
-        const steps = document.querySelectorAll(".progress-steps .step");
+    function renderMaintenance(orders = []) {
+        const container = document.querySelector("#maintenance-list");
+        if (!container) return;
+        container.replaceChildren();
 
-        if (vehicleName && data.vehicleName) {
-            vehicleName.textContent = data.vehicleName;
+        // Uma O.S. entregue não possui mais barra ativa, mas segue no histórico.
+        if (!Array.isArray(orders) || orders.length === 0) {
+            container.append(createElement("p", {
+                className: "empty-state",
+                text: "Nenhuma manutenção em andamento. Consulte os serviços anteriores no histórico dos seus veículos."
+            }));
+            return;
         }
 
-        if (!statusElement || steps.length === 0 || !data.status) return;
+        orders.forEach(order => {
+            const article = createElement("article", { className: "maintenance-card" });
+            const orderTitle = createElement("h3", {
+                text: `O.S. nº ${order.id} — ${order.vehicleName || "Veículo"}`
+            });
+            const statusLabel = createElement("p", { text: "Status atual: " });
+            statusLabel.append(createElement("strong", { text: order.status || "Não informado" }));
 
-        const currentIndex = maintenanceStatuses.indexOf(data.status);
-        statusElement.textContent = data.status;
+            const progress = createElement("div", { className: "progress-steps" });
+            progress.setAttribute("aria-label", `Etapas da ordem de serviço nº ${order.id}`);
+            const currentIndex = maintenanceStatuses.indexOf(order.status);
 
-        steps.forEach(function(step, index) {
-            step.classList.toggle("active", currentIndex >= 0 && index <= currentIndex);
+            maintenanceStatuses.forEach((stepName, index) => {
+                const step = createElement("div", {
+                    className: "step",
+                    text: stepName
+                });
+                if (currentIndex >= 0 && index <= currentIndex) step.classList.add("active");
+                if (index === currentIndex) step.classList.add("current");
+                progress.append(step);
+            });
+
+            article.append(orderTitle, statusLabel, progress);
+            container.append(article);
         });
     }
 
@@ -360,9 +382,14 @@
             if (!handled || !result) return;
 
             if (result.dashboard) renderDashboard(result.dashboard);
-            if (result.maintenance) renderMaintenance(result.maintenance);
+            renderMaintenance(result.maintenances || []);
         } catch (error) {
             console.error("Erro ao carregar dashboard:", error);
+            const container = document.querySelector("#maintenance-list");
+            if (container) container.replaceChildren(createElement("p", {
+                className: "empty-state",
+                text: "Não foi possível carregar as manutenções. Atualize a página para tentar novamente."
+            }));
         }
     }
 
