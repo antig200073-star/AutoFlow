@@ -45,8 +45,10 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
                   <video id="camera" muted playsinline autoplay hidden aria-label="Prévia da câmera"></video>
                   <img id="preview" alt="Foto capturada do seu veículo" hidden>
                   <button id="start" class="secondary" type="button">Abrir câmera</button>
+                  <button id="choose" class="secondary" type="button">Escolher foto do computador</button>
+                  <input id="file" type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label="Selecionar foto do veículo">
                   <button id="shoot" type="button" hidden>Tirar foto</button>
-                  <p class="hint">A foto é obrigatória. Você pode refazê-la antes de salvar.</p>
+                  <p class="hint">Escolha uma foto existente ou tire uma foto com a câmera. Formatos JPG, PNG ou WebP, até 5 MB.</p>
                 </section>
                 <div class="grid">
                   <div><label for="plate">Placa</label><input id="plate" name="placa" placeholder="ABC1D23" maxlength="8" autocomplete="off" autocapitalize="characters" required></div>
@@ -66,6 +68,8 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
       this.busy=false; this.cameraGeneration=0;
       this.$('close').onclick=this.$('cancel').onclick=()=>this.close();
       this.$('start').onclick=()=>this.startCamera();
+      this.$('choose').onclick=()=>this.$('file').click();
+      this.$('file').onchange=event=>this.choosePhoto(event);
       this.$('shoot').onclick=()=>this.takePhoto();
       this.$('plate').oninput=()=>{ this.$('plate').value=this.$('plate').value.toUpperCase(); };
       this.dialog.addEventListener('cancel',event=>{event.preventDefault();this.close();});
@@ -99,6 +103,7 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
     resetPhoto() {
       if(this.previewUrl) URL.revokeObjectURL(this.previewUrl);
       this.previewUrl=null;this.capture=null;
+      this.$('file').value='';
       this.$('preview').hidden=true;this.$('preview').removeAttribute('src');
       this.$('empty').hidden=false;this.$('start').textContent='Abrir câmera';
     }
@@ -129,6 +134,42 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
           : 'Não foi possível abrir a câmera. Feche outros aplicativos que estejam usando a câmera e tente novamente.';
       } finally { this.$('start').disabled=false; }
     }
+    async choosePhoto(event) {
+      const file=event.target.files?.[0];
+      if(!file)return;
+      const allowed=['image/jpeg','image/png','image/webp'];
+      if(!allowed.includes(file.type) || !file.size || file.size>5242880) {
+        this.$('message').textContent='Selecione uma imagem JPG, PNG ou WebP de até 5 MB.';
+        event.target.value='';
+        return;
+      }
+      try {
+        const bitmap=await createImageBitmap(file);
+        const canvas=document.createElement('canvas');
+        const ratio=Math.min(1,1280/Math.max(bitmap.width,bitmap.height));
+        canvas.width=Math.max(1,Math.round(bitmap.width*ratio));
+        canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
+        canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+        bitmap.close();
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.85));
+        if(!blob || blob.size>5242880)throw Error('A foto não pôde ser preparada. Selecione outra imagem.');
+        this.stopCamera();
+        const discarded=this.capture;this.service?.discard(discarded);
+        if(this.previewUrl)URL.revokeObjectURL(this.previewUrl);
+        this.capture={blob};
+        this.previewUrl=URL.createObjectURL(blob);
+        this.$('preview').src=this.previewUrl;
+        this.$('preview').hidden=false;
+        this.$('empty').hidden=true;
+        this.$('message').textContent='';
+        this.$('start').textContent='Abrir câmera';
+        this.$('plate').focus();
+      } catch(error) {
+        this.$('message').textContent=error?.message || 'Não foi possível carregar a foto.';
+      } finally {
+        event.target.value='';
+      }
+    }
     async takePhoto() {
       const video=this.$('camera');
       if(!video.videoWidth || !video.videoHeight) {this.$('message').textContent='Aguarde a imagem da câmera aparecer.';return;}
@@ -153,7 +194,7 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
     }
     async save() {
       if(this.busy)return;
-      if(!this.capture) {this.$('message').textContent='Tire uma foto do veículo antes de salvar.';this.$('start').focus();return;}
+      if(!this.capture) {this.$('message').textContent='Tire uma foto ou escolha uma imagem do computador antes de salvar.';this.$('start').focus();return;}
       if(!this.service) {this.$('message').textContent='Não foi possível conectar. Atualize a página.';return;}
       this.busy=true;this.stopCamera();this.$('message').textContent='Salvando foto e veículo…';
       this.$('fields').disabled=true;
