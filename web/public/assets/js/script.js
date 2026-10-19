@@ -376,7 +376,10 @@
         });
     }
 
+    let dashboardRequestPending = false;
     async function loadDashboardData() {
+        if (dashboardRequestPending || !document.querySelector("#maintenance-list")) return;
+        dashboardRequestPending = true;
         try {
             const { handled, result } = await runIntegrationHook("loadDashboard");
             if (!handled || !result) return;
@@ -390,6 +393,8 @@
                 className: "empty-state",
                 text: "Não foi possível carregar as manutenções. Atualize a página para tentar novamente."
             }));
+        } finally {
+            dashboardRequestPending = false;
         }
     }
 
@@ -823,6 +828,15 @@
         loadVehicles();
         loadWorkshops();
         loadDashboardData();
+        if (document.querySelector("#maintenance-list")) {
+            // Atualiza sem F5 após a oficina mudar o status, apenas com a página visível.
+            window.setInterval(() => {
+                if (!document.hidden) loadDashboardData();
+            }, 30000);
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) loadDashboardData();
+            });
+        }
         loadEvaluationOptions();
         loadEvaluations();
         loadProfile();
