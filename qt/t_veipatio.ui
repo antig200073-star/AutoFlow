@@ -39,7 +39,7 @@
    <item>
     <widget class="QLabel" name="lblSubtitulo">
      <property name="text">
-      <string>Monitore as entradas, saídas e a localização dos carros na oficina</string>
+      <string>Acompanhe as ordens de serviço e atualize o status dos veículos</string>
      </property>
     </widget>
    </item>
@@ -84,32 +84,32 @@
        </property>
        <item>
         <property name="text">
-         <string>Todos os Setores</string>
+         <string>Todos os Status</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Recepção / Entrada</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Box de Diagnóstico</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Elevador 1</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Elevador 2</string>
+         <string>Em Diagnóstico</string>
         </property>
        </item>
        <item>
         <property name="text">
          <string>Aguardando Peças</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Em Manutenção</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Pronto para Retirada</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Entregue</string>
         </property>
        </item>
        <item>
@@ -131,7 +131,7 @@
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="text">
-        <string>+ Registrar Entrada</string>
+        <string>Atualizar Lista</string>
        </property>
       </widget>
      </item>
@@ -152,7 +152,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Veículo / Cor</string>
+       <string>Veículo / Modelo</string>
       </property>
      </column>
      <column>
@@ -162,7 +162,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Local / Setor</string>
+       <string>Status / Etapa</string>
       </property>
      </column>
      <column>
@@ -223,7 +223,7 @@
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
        <property name="text">
-        <string>Dar Saída no Veículo</string>
+        <string>Alterar Status / Saída</string>
        </property>
       </widget>
      </item>
