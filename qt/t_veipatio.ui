@@ -112,11 +112,6 @@
          <string>Entregue</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Pronto para Entrega</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
