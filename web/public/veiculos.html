@@ -8,7 +8,7 @@
     <link rel="icon" type="image/jpeg" href="assets/img/logo-autoflow.jpg">
     <title>Veículos</title>
     <link rel="stylesheet" href="assets/css/identity.css?v=1">
-    <link rel="stylesheet" href="assets/css/vehicles.css">
+    <link rel="stylesheet" href="assets/css/vehicles.css?v=2">
 </head>
 
 <body>
@@ -47,9 +47,17 @@
       <div id="vehicle-list" class="af-vehicles-grid"></div>
     </section>
     <autoflow-vehicle-registration></autoflow-vehicle-registration>
+    <dialog id="vehicle-history-dialog" class="af-history-dialog" aria-labelledby="vehicle-history-title">
+      <div class="af-history-header">
+        <h2 id="vehicle-history-title">Histórico de manutenção</h2>
+        <button type="button" id="close-vehicle-history" class="secondary">Fechar</button>
+      </div>
+      <p id="vehicle-history-message" role="status" aria-live="polite"></p>
+      <div id="vehicle-history-list" class="af-history-list"></div>
+    </dialog>
 </main>
      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
 <script src="assets/js/integration.js?v=9"></script>
-<script type="module" src="assets/js/vehicles-page.js?v=12"></script>
+<script type="module" src="assets/js/vehicles-page.js?v=13"></script>
 </body>
 </html>
