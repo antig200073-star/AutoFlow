@@ -4,6 +4,11 @@ import './vehicle-registration.js';
 const list=document.getElementById('vehicle-list');
 const message=document.getElementById('vehicles-message');
 const registration=document.querySelector('autoflow-vehicle-registration');
+const historyDialog=document.getElementById('vehicle-history-dialog');
+const historyTitle=document.getElementById('vehicle-history-title');
+const historyMessage=document.getElementById('vehicle-history-message');
+const historyList=document.getElementById('vehicle-history-list');
+let historyRequest=0;
 const node=(tag,text,className)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;if(className)el.className=className;return el;};
 let vehicles=[];
 let revision=0;
@@ -24,7 +29,67 @@ function render() {
     remove.type='button';remove.disabled=removing;
     remove.setAttribute('aria-label',`Excluir veículo ${vehicle.placa}`);
     remove.onclick=()=>removeVehicle(vehicle);
-    body.append(dl,remove);card.append(body);list.append(card);
+    const history=node('button','Histórico de manutenção','af-history-button');
+    history.type='button';history.disabled=removing;
+    history.setAttribute('aria-label',`Ver histórico de manutenção do veículo ${vehicle.placa}`);
+    history.onclick=()=>openHistory(vehicle);
+    const actions=node('div',null,'af-vehicle-actions');
+    actions.append(history,remove);
+    body.append(dl,actions);card.append(body);list.append(card);
+  }
+}
+const HISTORY_STATUSES = {
+  aguardando:'Aguardando Peças',
+  em_analise:'Em Diagnóstico',
+  em_manutencao:'Em Manutenção',
+  pronto:'Pronto para Retirada',
+  entregue:'Entregue',
+};
+function displayDate(value) {
+  if(!value)return 'Não informada';
+  const parsed=new Date(value);
+  return Number.isNaN(parsed.getTime())?'Não informada':
+    new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(parsed);
+}
+function closeHistory() {
+  historyRequest++;
+  if(historyDialog.open)historyDialog.close();
+}
+document.getElementById('close-vehicle-history').addEventListener('click',closeHistory);
+historyDialog.addEventListener('close',()=>{historyRequest++;});
+async function openHistory(vehicle) {
+  if(!registration?.service) {
+    message.textContent='Não foi possível consultar o histórico. Atualize a página.';
+    message.classList.add('error');
+    return;
+  }
+  const current=++historyRequest;
+  historyTitle.textContent=`Histórico de manutenção — ${vehicle.marca} ${vehicle.modelo} (${vehicle.placa})`;
+  historyMessage.textContent='Consultando ordens de serviço…';
+  historyList.replaceChildren();
+  if(!historyDialog.open)historyDialog.showModal();
+  try {
+    const orders=await registration.service.history(vehicle.id);
+    if(current!==historyRequest || !historyDialog.open)return;
+    historyMessage.textContent=orders.length?`${orders.length} ordem(ns) de serviço encontrada(s).`:'Nenhuma manutenção registrada para este veículo.';
+    historyList.replaceChildren();
+    for(const order of orders) {
+      const card=node('article',null,'af-history-item');
+      card.append(
+        node('h3',`O.S. nº ${order.id} — ${HISTORY_STATUSES[order.status] || order.status || 'Status não informado'}`),
+        node('p',`Oficina: ${order.oficina}`),
+        node('p',`Serviço / defeito: ${order.problema || 'Não informado'}`),
+        node('p',`Entrada: ${displayDate(order.entrada)}`),
+      );
+      if(order.saida)card.append(node('p',`Saída: ${displayDate(order.saida)}`));
+      card.append(node('small',order.status==='entregue'?'Manutenção entregue':'Manutenção em acompanhamento'));
+      historyList.append(card);
+    }
+  } catch(error) {
+    if(current!==historyRequest || !historyDialog.open)return;
+    console.error('AutoFlow - histórico do veículo:',error);
+    historyMessage.textContent=vehicleError(error);
+    historyList.replaceChildren();
   }
 }
 async function removeVehicle(vehicle) {
