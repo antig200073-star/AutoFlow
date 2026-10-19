@@ -509,15 +509,45 @@
             modal.hidden = true;
         }
 
-        grid.addEventListener("click", function(event) {
+        const reviewsList = document.querySelector("#workshop-modal-reviews");
+        let requestVersion = 0;
+        grid.addEventListener("click", async function(event) {
             const button = event.target.closest(".workshop-details");
             if (!button) return;
-
+            const current = ++requestVersion;
             name.textContent = button.dataset.name || "Oficina";
             address.textContent = `📍 ${button.dataset.address || "Endereço não informado"}`;
             distance.textContent = button.dataset.distance || "Distância não informada";
-            rating.textContent = `⭐ ${button.dataset.rating || "—"}`;
+            rating.textContent = "Carregando avaliações…";
+            if (reviewsList) reviewsList.replaceChildren();
             modal.hidden = false;
+            try {
+                const { handled, result } = await runIntegrationHook("loadWorkshopReviews", button.dataset.workshopId);
+                if (current !== requestVersion || modal.hidden) return;
+                if (!handled || !result) throw Error("Consulta de avaliações indisponível.");
+                rating.textContent = result.total
+                    ? `⭐ ${result.average} de 5 (${result.total} avaliação(ões))`
+                    : "Ainda não há avaliações.";
+                if (!reviewsList) return;
+                if (!result.reviews.length) {
+                    reviewsList.append(createElement("p", { text: "Esta oficina ainda não recebeu comentários." }));
+                } else {
+                    result.reviews.forEach(review => {
+                        const item = createElement("article", { className: "evaluation-card" });
+                        const note = createElement("p", { text: `⭐ ${review.nota}/5` });
+                        const comment = createElement("p", { text: review.comentario || "Avaliação sem comentário." });
+                        const day = review.data ? new Date(review.data).toLocaleDateString("pt-BR") : "";
+                        const dateLabel = createElement("small", { text: day });
+                        item.append(note, comment, dateLabel);
+                        reviewsList.append(item);
+                    });
+                }
+            } catch (error) {
+                if (current !== requestVersion || modal.hidden) return;
+                rating.textContent = "Não foi possível carregar as avaliações.";
+                if (reviewsList) reviewsList.append(createElement("p", { text: "Tente abrir a oficina novamente." }));
+                console.error("Falha ao carregar avaliações da oficina:", error);
+            }
         });
 
         closeButton.addEventListener("click", closeModal);
