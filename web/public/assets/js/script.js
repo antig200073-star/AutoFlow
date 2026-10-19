@@ -716,14 +716,14 @@
             try {
                 const { handled, result } = await runIntegrationHook("updateProfile", payload);
 
-                if (handled && result?.success === false) {
-                    setMessage(message, result.message || "Não foi possível atualizar o perfil.", "message-error");
+                if (!handled || result?.success !== true) {
+                    setMessage(message, result?.message || "Não foi possível salvar: integração com o Supabase indisponível.", "message-error");
                     return;
                 }
 
-                if (handled && result?.profile) renderProfile(result.profile);
+                if (result.profile) renderProfile(result.profile);
                 setEditing(false);
-                setMessage(message, result?.message || "Perfil atualizado com sucesso!", "message-success");
+                setMessage(message, result.message || "Perfil atualizado com sucesso!", "message-success");
             } catch (error) {
                 console.error(error);
                 setMessage(message, "Não foi possível atualizar o perfil.", "message-error");
