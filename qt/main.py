@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent
 # Importa a conexão configurada no arquivo database.py
 from database import supabase
 from workshop_auth import current_workshop, require_approved, register_workshop, STATUS_MESSAGES
-from order_rows import order_row_values
+from order_rows import order_row_values, format_entry_date
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -89,6 +89,7 @@ def acesso_aprovado():
 
 def abrir_veipatio():
     if acesso_aprovado():
+        carregar_patio()
         form_patio.exec_()
 
 
@@ -235,6 +236,108 @@ def carregar_dashboard():
         form_status.show()
         return False
 
+PATIO_STATUSES = {
+    "Em Diagnóstico": "em_analise",
+    "Aguardando Peças": "aguardando",
+    "Em Manutenção": "em_manutencao",
+    "Pronto para Retirada": "pronto",
+    "Entregue": "entregue",
+}
+PATIO_LABELS = {v: k for k, v in PATIO_STATUSES.items()}
+patio_orders = []
+
+def carregar_patio():
+    global patio_orders
+    if not acesso_aprovado():
+        return
+    try:
+        result = (
+            supabase.table("ordens_servico")
+            .select("id,status,data_entrada,veiculo_id,"
+                    "tb_veiculo!ordens_servico_veiculo_id_fkey(placa,marca,modelo),"
+                    "tb_cli!ordens_servico_cliente_id_fkey(nome)")
+            .eq("oficina_id", oficina_logada["id"])
+            .neq("status", "entregue")
+            .order("data_entrada", desc=True)
+            .limit(200)
+            .execute()
+        )
+        patio_orders = result.data or []
+        grid = form_patio.gridPatio
+        grid.setSortingEnabled(False)
+        grid.setRowCount(0)
+        for order in patio_orders:
+            vehicle = order.get("tb_veiculo") or {}
+            owner = order.get("tb_cli") or {}
+            model = " ".join(filter(None, [vehicle.get("marca"), vehicle.get("modelo")]))
+            values = [
+                vehicle.get("placa") or "—", model or "—",
+                owner.get("nome") or "—",
+                PATIO_LABELS.get(order.get("status"), order.get("status") or "—"),
+                format_entry_date(order.get("data_entrada")),
+                str(order["id"]),
+            ]
+            row = grid.rowCount()
+            grid.insertRow(row)
+            for col, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                if col == 0:
+                    item.setData(Qt.UserRole, order["id"])
+                grid.setItem(row, col, item)
+        grid.setSortingEnabled(True)
+        filtrar_patio()
+    except Exception as error:
+        QMessageBox.warning(form_patio, "Pátio", f"Não foi possível carregar os veículos: {error}")
+
+def filtrar_patio():
+    term = form_patio.txtBuscarPatio.text().strip().casefold()
+    selected = form_patio.cmbSetor.currentText()
+    grid = form_patio.gridPatio
+    for row in range(grid.rowCount()):
+        values = [grid.item(row, col).text() if grid.item(row, col) else "" for col in range(grid.columnCount())]
+        matches_status = selected == "Todos os Status" or values[3] == selected
+        grid.setRowHidden(row, not (matches_status and term in " ".join(values).casefold()))
+
+def alterar_status_patio():
+    if not acesso_aprovado():
+        return
+    grid = form_patio.gridPatio
+    row = grid.currentRow()
+    if row < 0 or grid.isRowHidden(row):
+        QMessageBox.information(form_patio, "Pátio", "Selecione um veículo da lista.")
+        return
+    item = grid.item(row, 0)
+    if item is None:
+        return
+    order_id = item.data(Qt.UserRole)
+    current = grid.item(row, 3).text()
+    available = list(PATIO_STATUSES)
+    new_status, accepted = QtWidgets.QInputDialog.getItem(
+        form_patio, "Alterar status",
+        f"O.S. nº {order_id} — selecione a nova etapa:", available,
+        available.index(current) if current in available else 0, False
+    )
+    if not accepted or new_status == current:
+        return
+    if new_status == "Entregue":
+        confirm = QMessageBox.question(
+            form_patio, "Confirmar saída",
+            f"Confirmar a entrega do veículo da O.S. nº {order_id}?"
+        )
+        if confirm != QMessageBox.Yes:
+            return
+    try:
+        supabase.rpc("update_workshop_order_status", {
+            "p_order_id": order_id, "p_status": PATIO_STATUSES[new_status]
+        }).execute()
+        carregar_patio()
+        carregar_dashboard()
+        QMessageBox.information(form_patio, "Status atualizado", "A etapa da manutenção foi atualizada.")
+    except Exception as error:
+        QMessageBox.warning(form_patio, "Não foi possível alterar", str(error))
+
+
 # ==========================================
 # CADASTRO DE OS
 # ==========================================
@@ -328,6 +431,11 @@ form_cad_os.btnCancelar.clicked.connect(form_cad_os.close)
 
 # Eventos - Pátio
 form_patio.btnVoltar.clicked.connect(form_patio.close)
+form_patio.btnRegistrarEntrada.clicked.connect(carregar_patio)
+form_patio.btnDarSaida.clicked.connect(alterar_status_patio)
+form_patio.txtBuscarPatio.textChanged.connect(filtrar_patio)
+form_patio.cmbSetor.currentTextChanged.connect(filtrar_patio)
+form_patio.gridPatio.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
 # Status persistente para cadastros pendentes e acesso revogado.
 form_status = QtWidgets.QDialog()
