@@ -73,6 +73,36 @@ export function createVehicleService(db) {
       capture.saved=true;
       return present(data);
     },
+    async history(id) {
+      const vehicleId = Number(id);
+      if (!Number.isSafeInteger(vehicleId) || vehicleId <= 0) throw Error('Veículo inválido.');
+      const { client } = await account();
+
+      // Confirma a posse do veículo; RLS das ordens de serviço também limita
+      // a consulta ao cliente autenticado no próprio Supabase.
+      const owned = await db.from('tb_veiculo')
+        .select('id_veiculo')
+        .eq('id_veiculo', vehicleId)
+        .eq('cliente_id', client.id_cliente)
+        .maybeSingle();
+      if (owned.error) throw owned.error;
+      if (!owned.data) throw Error('Este veículo não está vinculado à sua conta.');
+
+      const { data, error } = await db.from('ordens_servico')
+        .select('id,oficina_id,status,descricao_problema,data_entrada,data_saida,oficinas!ordens_servico_oficina_id_fkey(nome)')
+        .eq('cliente_id', client.id_cliente)
+        .eq('veiculo_id', vehicleId)
+        .order('data_entrada', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(order => ({
+        id: order.id,
+        oficina: order.oficinas?.nome || `Oficina nº ${order.oficina_id}`,
+        status: order.status,
+        problema: order.descricao_problema || '',
+        entrada: order.data_entrada,
+        saida: order.data_saida
+      }));
+    },
     async remove(id) {
       await account();
       const { error } = await db.rpc('remove_my_vehicle', { p_vehicle_id: id });
