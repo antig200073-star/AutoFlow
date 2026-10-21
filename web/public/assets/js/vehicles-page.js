@@ -1,9 +1,11 @@
 import {createVehicleService,vehicleError,vehicleRemovalPrompt,vehicleRemovalError} from './vehicle-service.js';
 import './vehicle-registration.js';
+import './vehicle-link.js';
 
 const list=document.getElementById('vehicle-list');
 const message=document.getElementById('vehicles-message');
 const registration=document.querySelector('autoflow-vehicle-registration');
+const workshopLink=document.querySelector('autoflow-vehicle-link');
 const historyDialog=document.getElementById('vehicle-history-dialog');
 const historyTitle=document.getElementById('vehicle-history-title');
 const historyMessage=document.getElementById('vehicle-history-message');
@@ -34,7 +36,9 @@ function render() {
     history.setAttribute('aria-label',`Ver histórico de manutenção do veículo ${vehicle.placa}`);
     history.onclick=()=>openHistory(vehicle);
     const actions=node('div',null,'af-vehicle-actions');
-    actions.append(history,remove);
+    const link=node('button','Vincular à oficina','af-history-button');
+    link.type='button'; link.onclick=()=>workshopLink.open(vehicle);
+    actions.append(link,history,remove);
     body.append(dl,actions);card.append(body);list.append(card);
   }
 }
@@ -121,6 +125,7 @@ function showError(error) {
 }
 if(window.AutoFlowSupabase && registration && typeof registration.open === 'function') {
   registration.service=createVehicleService(window.AutoFlowSupabase);
+  workshopLink.service=registration.service;
   addButton.addEventListener('click',()=>{
     try {
       message.textContent='';message.classList.remove('error');

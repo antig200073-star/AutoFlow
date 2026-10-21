@@ -3,10 +3,12 @@ import VehicleHistory from './VehicleHistory';
 import { vehicleService } from './services/api';
 import { vehicleError, vehicleRemovalPrompt, vehicleRemovalError } from '../../web/public/assets/js/vehicle-service.js';
 import '../../web/public/assets/js/vehicle-registration.js';
+import '../../web/public/assets/js/vehicle-link.js';
 import '../../web/public/assets/css/vehicles.css';
 
 export default function Veiculos() {
   const registration = useRef(null);
+  const workshopLink = useRef(null);
   const [historyVehicle, setHistoryVehicle] = useState(null);
   const revision = useRef(0);
   const [vehicles, setVehicles] = useState([]);
@@ -40,6 +42,7 @@ export default function Veiculos() {
   useEffect(() => {
     const modal = registration.current;
     modal.service = vehicleService;
+    workshopLink.current.service = vehicleService;
     const saved = event => {
       revision.current++;
       setLoading(false);
@@ -75,6 +78,7 @@ export default function Veiculos() {
                 <div><dt>Ano</dt><dd>{vehicle.ano ?? 'Não informado'}</dd></div>
                 <div><dt>Quilometragem</dt><dd>{vehicle.km_atual == null ? 'Não informada' : `${Number(vehicle.km_atual).toLocaleString('pt-BR')} km`}</dd></div>
               </dl><div className="af-vehicle-actions">
+                <button className="af-history-button" type="button" onClick={() => workshopLink.current.open(vehicle)}>Vincular à oficina</button>
                 <button className="af-history-button" type="button" disabled={removing}
                   aria-label={`Ver histórico de manutenção do veículo ${vehicle.placa}`} onClick={() => setHistoryVehicle(vehicle)}>Histórico de manutenção</button>
                 <button className="af-delete-vehicle" type="button" disabled={removing}
@@ -83,6 +87,7 @@ export default function Veiculos() {
         </div>
       </section>
       <autoflow-vehicle-registration ref={registration} />
+      <autoflow-vehicle-link ref={workshopLink} />
       {historyVehicle && <VehicleHistory vehicle={historyVehicle} onClose={() => setHistoryVehicle(null)} />}
     </main></div>
   );

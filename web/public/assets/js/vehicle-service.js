@@ -73,6 +73,14 @@ export function createVehicleService(db) {
       capture.saved=true;
       return present(data);
     },
+    async issueWorkshopLink(id) {
+      const vehicleId = Number(id);
+      if (!Number.isSafeInteger(vehicleId) || vehicleId <= 0) throw Error('Veículo inválido.');
+      await account();
+      const { data, error } = await db.rpc('issue_vehicle_workshop_link', { p_vehicle_id: vehicleId });
+      if (error) throw error;
+      return data;
+    },
     async history(id) {
       const vehicleId = Number(id);
       if (!Number.isSafeInteger(vehicleId) || vehicleId <= 0) throw Error('Veículo inválido.');

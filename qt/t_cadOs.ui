@@ -119,6 +119,19 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="lblCodigoVinculo">
+     <property name="text"><string>Cliente com conta: peça o código em Meus veículos → Vincular à oficina.</string></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="txtCodigoVinculo">
+     <property name="minimumSize"><size><width>0</width><height>38</height></size></property>
+     <property name="placeholderText"><string>Código de vínculo do veículo (primeiro atendimento)</string></property>
+     <property name="maxLength"><number>36</number></property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLabel" name="lblSecaoDefeito">
      <property name="class" stdset="0">
       <string>secaoTitle</string>
