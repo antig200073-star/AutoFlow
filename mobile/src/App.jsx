@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import { loginUser, logoutUser } from './services/api';
 import Cad from './Cad';
@@ -17,16 +17,19 @@ function Login({ onNavigate }) {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true); setMessage('');
     try {
       const result = await loginUser(email.trim(), senha);
       if (result.success) onNavigate('dash');
       else setMessage(result.message);
     } catch { setMessage('Não foi possível conectar. Tente novamente.'); }
-    finally { setBusy(false); }
+    finally { submitting.current = false; setBusy(false); }
   };
 
   return (
@@ -75,7 +78,7 @@ function Login({ onNavigate }) {
             </div>
 
             <button type="submit" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
-            <p role="status" className="form-message message-error">{message}</p>
+            {message && <p role="status" className="form-message message-error">{message}</p>}
           </form>
 
           <p className="register-link">
@@ -95,9 +98,15 @@ function Login({ onNavigate }) {
         <button
           id="btn-google"
           type="button"
+          disabled={busy}
           onClick={async () => {
-            const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
-            if (error) setMessage('Não foi possível entrar com o Google. Confira a configuração do provedor.');
+            if (submitting.current) return;
+            submitting.current = true; setBusy(true); setMessage('');
+            try {
+              const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
+              if (error) throw error;
+            } catch { setMessage('Não foi possível entrar com o Google. Tente novamente.'); }
+            finally { submitting.current = false; setBusy(false); }
           }}
         >
           Entrar com o Google
@@ -109,12 +118,26 @@ function Login({ onNavigate }) {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => { if (mounted && data.user) setCurrentPage('dash'); }).catch(() => {});
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') setCurrentPage('login');
+    let mounted = true, revision = 0;
+    const applySession = user => {
+      if (!mounted) return;
+      setAuthenticated(Boolean(user)); setChecking(false);
+      setCurrentPage(page => user ? (['login', 'cadastro'].includes(page) ? 'dash' : page)
+        : (page === 'cadastro' ? page : 'login'));
+    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Não faz consultas dentro do callback de autenticação.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        revision++; applySession(session?.user);
+      }
     });
+    const initialRevision = revision;
+    supabase.auth.getUser().then(({ data }) => {
+      if (revision === initialRevision) applySession(data.user);
+    }).catch(() => { if (revision === initialRevision) applySession(null); });
     return () => { mounted = false; subscription.unsubscribe(); };
   }, []);
   const navigate = async (page) => {
@@ -124,20 +147,22 @@ export default function App() {
     }
     setCurrentPage(page);
   };
-  const authenticatedPage = !['login', 'cadastro'].includes(currentPage);
+  if (checking) return <main><p role="status" className="empty-state">Verificando sua sessão…</p></main>;
+  const page = authenticated ? currentPage : (currentPage === 'cadastro' ? 'cadastro' : 'login');
+  const authenticatedPage = authenticated && !['login', 'cadastro'].includes(page);
 
   return (
     <div className={authenticatedPage ? 'af-app' : 'af-auth'}>
       {authenticatedPage && <header className="af-app-header"><Brand compact /><span>Área do cliente</span></header>}
-      {currentPage === 'login' && <Login onNavigate={setCurrentPage} />}
-      {currentPage === 'cadastro' && <Cad onNavigate={setCurrentPage} />}
-      {currentPage === 'dash' && <Dash onNavigate={setCurrentPage} />}
-      {currentPage === 'veiculos' && <Veiculos />}
-      {currentPage === 'oficinas' && <Oficinas />}
-      {currentPage === 'avaliacoes' && <Avaliacoes />}
-      {currentPage === 'perfil' && <Perfil onNavigate={navigate} />}
-      {currentPage === 'servicos' && <Dash onNavigate={setCurrentPage} serviceOnly />}
-      {authenticatedPage && <BottomNavigation currentPage={currentPage} onNavigate={setCurrentPage} />}
+      {page === 'login' && <Login onNavigate={setCurrentPage} />}
+      {page === 'cadastro' && <Cad onNavigate={setCurrentPage} />}
+      {page === 'dash' && <Dash onNavigate={setCurrentPage} />}
+      {page === 'veiculos' && <Veiculos />}
+      {page === 'oficinas' && <Oficinas />}
+      {page === 'avaliacoes' && <Avaliacoes />}
+      {page === 'perfil' && <Perfil onNavigate={navigate} />}
+      {page === 'servicos' && <Dash onNavigate={setCurrentPage} serviceOnly />}
+      {authenticatedPage && <BottomNavigation currentPage={page} onNavigate={setCurrentPage} />}
     </div>
   );
 }

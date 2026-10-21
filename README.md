@@ -34,7 +34,7 @@ npm ci
 npm run dev
 ```
 
-Para gerar a versão de produção, execute `npm run build`. Para analisar o código, execute `npm run lint`.
+Para gerar a versão de produção, execute `npm run build`. Para analisar o código, execute `npm run lint`. Os testes do mobile rodam com `npm test` dentro de `mobile/`.
 
 ## Executar o site
 
@@ -75,7 +75,7 @@ Os testes de banco executam a estrutura de referência, os scripts anteriores e 
 
 ## Limites atuais
 
-- O login/cadastro mobile e a listagem de oficinas usam o Supabase. Outros componentes ainda dependem de integrações parciais e têm exemplos herdados; o aplicativo completo ainda requer trabalho.
+- O mobile integra autenticação, acompanhamento de O.S., veículos e histórico, oficinas e avaliações, envio de avaliações e perfil ao Supabase. Consulte [Paridade do mobile com o web](docs/MOBILE_PARIDADE.md) para funcionamento, execução e limites de validação.
 - A revisão do vínculo do solicitante é humana. CNPJ ativo e e-mail confirmado, isoladamente, não comprovam representação da oficina.
 - A consulta de CNPJ depende da disponibilidade e cobertura da BrasilAPI. Uma falha não libera acesso.
 - Oficinas antigas precisam de conta Auth vinculada por um administrador e de revisão. A senha antiga da tabela não é reutilizada.

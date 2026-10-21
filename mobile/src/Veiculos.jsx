@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import VehicleHistory from './VehicleHistory';
 import { vehicleService } from './services/api';
 import { vehicleError, vehicleRemovalPrompt, vehicleRemovalError } from '../../web/public/assets/js/vehicle-service.js';
 import '../../web/public/assets/js/vehicle-registration.js';
@@ -6,6 +7,7 @@ import '../../web/public/assets/css/vehicles.css';
 
 export default function Veiculos() {
   const registration = useRef(null);
+  const [historyVehicle, setHistoryVehicle] = useState(null);
   const revision = useRef(0);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,8 +47,14 @@ export default function Veiculos() {
       setMessage({ text: 'Veículo cadastrado com sucesso!', error: false });
     };
     modal.addEventListener('vehicle-saved', saved);
-    load();
-    return () => { revision.current++; modal.removeEventListener('vehicle-saved', saved); };
+    let active = true;
+    const current = ++revision.current;
+    vehicleService.list().then(result => {
+      if (active && current === revision.current) setVehicles(result);
+    }).catch(error => {
+      if (active && current === revision.current) setMessage({ text: vehicleError(error), error: true });
+    }).finally(() => { if (active && current === revision.current) setLoading(false); });
+    return () => { active = false; modal.removeEventListener('vehicle-saved', saved); };
   }, []);
   return (
     <div className="dashboard-wrapper"><main>
@@ -66,12 +74,16 @@ export default function Veiculos() {
                 <div><dt>Placa</dt><dd className="af-plate">{vehicle.placa}</dd></div>
                 <div><dt>Ano</dt><dd>{vehicle.ano ?? 'Não informado'}</dd></div>
                 <div><dt>Quilometragem</dt><dd>{vehicle.km_atual == null ? 'Não informada' : `${Number(vehicle.km_atual).toLocaleString('pt-BR')} km`}</dd></div>
-              </dl><button className="af-delete-vehicle" type="button" disabled={removing}
-                aria-label={`Excluir veículo ${vehicle.placa}`} onClick={() => removeVehicle(vehicle)}>Excluir veículo</button></div>
+              </dl><div className="af-vehicle-actions">
+                <button className="af-history-button" type="button" disabled={removing}
+                  aria-label={`Ver histórico de manutenção do veículo ${vehicle.placa}`} onClick={() => setHistoryVehicle(vehicle)}>Histórico de manutenção</button>
+                <button className="af-delete-vehicle" type="button" disabled={removing}
+                aria-label={`Excluir veículo ${vehicle.placa}`} onClick={() => removeVehicle(vehicle)}>Excluir veículo</button></div></div>
             </article>)}
         </div>
       </section>
       <autoflow-vehicle-registration ref={registration} />
+      {historyVehicle && <VehicleHistory vehicle={historyVehicle} onClose={() => setHistoryVehicle(null)} />}
     </main></div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Brand from './Brand';
 import { registerUser } from './services/api';
 
@@ -11,6 +11,8 @@ export default function Cad({ onNavigate }) {
     confirmarSenha: '',
   });
 
+  const submitting = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -25,6 +27,7 @@ export default function Cad({ onNavigate }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting.current) return;
     setMessage({ text: '', type: '' });
 
     if (formData.senha !== formData.confirmarSenha) {
@@ -42,8 +45,10 @@ export default function Cad({ onNavigate }) {
       senha: formData.senha,
     };
 
+    submitting.current = true; setBusy(true);
     try {
       const result = await registerUser(payload);
+      if (result.success && result.authenticated) { onNavigate('dash'); return; }
       setMessage({
         text: result.message || 'Não foi possível criar a conta.',
         type: result.success ? 'message-success' : 'message-error',
@@ -54,7 +59,7 @@ export default function Cad({ onNavigate }) {
         text: 'Não foi possível criar a conta.',
         type: 'message-error',
       });
-    }
+    } finally { submitting.current = false; setBusy(false); }
   };
 
   return (
@@ -150,7 +155,7 @@ export default function Cad({ onNavigate }) {
               </button>
             </div>
 
-            <button type="submit">Criar conta</button>
+            <button type="submit" disabled={busy}>{busy ? 'Criando conta…' : 'Criar conta'}</button>
 
             {message.text && (
               <p
