@@ -60,7 +60,7 @@ begin
       and v.excluido_em is null and upper(regexp_replace(v.placa,'[ -]','','g'))=plate) then
     raise exception 'O código não corresponde a um veículo ativo com essa placa.';
   end if;
-  perform pg_advisory_xact_lock(hashtextextended(workshop::text || ':' || plate,0));
+  perform pg_advisory_xact_lock(hashtextextended('autoflow:plate:' || plate,0));
   insert into public.ordens_servico(oficina_id,cliente_id,veiculo_id,status,descricao_problema)
     values(workshop,link.client_id,link.vehicle_id,p_status,p_problem) returning id into order_id;
   update private.vehicle_workshop_links set used_at=clock_timestamp() where vehicle_id=link.vehicle_id;
@@ -82,7 +82,7 @@ begin
   if plate !~ '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$' or length(trim(coalesce(p_client,''))) not between 2 and 150
     or length(coalesce(p_model,''))>150 or length(coalesce(p_problem,''))>4000
     or p_status is null or p_status not in('aguardando','em_analise','em_manutencao') then raise exception 'Dados da ordem inválidos.'; end if;
-  perform pg_advisory_xact_lock(hashtextextended(workshop::text || ':' || plate,0));
+  perform pg_advisory_xact_lock(hashtextextended('autoflow:plate:' || plate,0));
   select count(*) into matches from public.tb_veiculo v join public.tb_cli c on c.id_cliente=v.cliente_id
     where v.excluido_em is null and upper(regexp_replace(v.placa,'[ -]','','g'))=plate and c.auth_user_id is not null;
   select v.id_veiculo,v.cliente_id,c.nome into vehicle_id,client_id,existing_name
@@ -95,6 +95,16 @@ begin
     raise exception 'Peça ao cliente o código em Meus veículos > Vincular à oficina e informe no cadastro da O.S. Não foi criado um cadastro duplicado.';
   end if;
   if vehicle_id is null then
+    -- Uma placa avulsa atendida por outra oficina também não pode ser duplicada.
+    if exists(select 1 from public.tb_veiculo v where v.excluido_em is null
+      and upper(regexp_replace(v.placa,'[ -]','','g'))=plate) then
+      raise exception 'Esta placa já possui cadastro sem vínculo com esta oficina. Peça ao responsável do AutoFlow para conferir o vínculo do cliente.';
+    end if;
+    if exists(select 1 from public.tb_veiculo v join public.tb_cli c on c.id_cliente=v.cliente_id
+      where v.excluido_em is not null and c.auth_user_id is not null
+        and upper(regexp_replace(v.placa,'[ -]','','g'))=plate) then
+      raise exception 'Esta placa foi removida da lista do cliente. Peça ao cliente para cadastrá-la novamente e gerar o código de vínculo.';
+    end if;
     insert into public.tb_cli(nome) values(trim(p_client)) returning id_cliente into client_id;
     insert into public.tb_veiculo(placa,modelo,cliente_id) values(plate,trim(p_model),client_id) returning id_veiculo into vehicle_id;
   elsif lower(trim(existing_name))<>lower(trim(p_client)) then

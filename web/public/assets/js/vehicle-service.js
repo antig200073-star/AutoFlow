@@ -16,6 +16,7 @@ export function validateVehicle(input) {
 
 export function vehicleError(error) {
   const message = String(error?.message || '');
+  if (error?.code === '23505' && /autoflow_vehicle_active_plate_unique/i.test(message)) return 'Esta placa já possui um veículo cadastrado. Confira o cadastro existente ou solicite a correção do vínculo ao responsável do AutoFlow.';
   if (/excluido_em|remove_my_vehicle/i.test(message)) return 'A exclusão de veículos precisa ser ativada no Supabase. Execute a migração vehicle_removal.';
   if (/schema cache|foto_path|register_vehicle_with_photo|Bucket not found/i.test(message)) return 'O cadastro com foto ainda precisa ser ativado no Supabase. Consulte o responsável pelo AutoFlow.';
   if (/JWT|session|token|not authenticated/i.test(message)) return 'Sua sessão expirou. Entre novamente.';
