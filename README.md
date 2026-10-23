@@ -79,7 +79,7 @@ Os testes de banco executam a estrutura de referência, os scripts anteriores e 
 - A revisão do vínculo do solicitante é humana. CNPJ ativo e e-mail confirmado, isoladamente, não comprovam representação da oficina.
 - A consulta de CNPJ depende da disponibilidade e cobertura da BrasilAPI. Uma falha não libera acesso.
 - Oficinas antigas precisam de conta Auth vinculada por um administrador e de revisão. A senha antiga da tabela não é reutilizada.
-- A criação de OS é atômica e limitada à oficina aprovada. O vínculo de atendimentos com contas de clientes existentes ainda precisa de um fluxo próprio de comprovação; não é feito por nome ou placa.
+- A criação de O.S. é atômica e limitada à oficina aprovada. O primeiro atendimento de um veículo já cadastrado usa um código gerado pelo cliente. A migração e a atualização conjunta estão descritas em [Vínculo entre cliente e O.S.](docs/VINCULO_CLIENTE_OS.md). Ordens antigas exigem conferência e reparo autorizado.
 - Alguns botões do Qt, a gestão de estoque e os campos de peças/valores da OS ainda não têm implementação completa.
 
 Consulte os detalhes e as regras de migração no [guia de verificação](docs/VERIFICACAO_OFICINAS.md). As chaves presentes nos clientes são publicáveis. Nunca configure uma chave secreta ou `service_role` no navegador, no mobile ou no Qt.

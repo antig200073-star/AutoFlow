@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent
 from database import supabase
 from workshop_auth import current_workshop, require_approved, register_workshop, STATUS_MESSAGES
 from order_rows import order_row_values, format_entry_date
+from order_service import create_order, order_error
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -354,6 +355,7 @@ def abrir_cad_os():
     form_cad_os.txtPlaca.clear()
     form_cad_os.txtVeiculo.clear()
     form_cad_os.txtCliente.clear()
+    form_cad_os.txtCodigoVinculo.clear()
     form_cad_os.txtDefeito.clear()
     form_cad_os.txtPecasServicos.clear()
     form_cad_os.spinMaoObra.setValue(0.0)
@@ -365,18 +367,18 @@ def salvar_ordem_servico():
     if not acesso_aprovado():
         return
     try:
-        supabase.rpc("create_workshop_order", {
+        create_order(supabase, {
             "p_plate": form_cad_os.txtPlaca.text().strip(),
             "p_model": form_cad_os.txtVeiculo.text().strip(),
             "p_client": form_cad_os.txtCliente.text().strip(),
             "p_problem": form_cad_os.txtDefeito.toPlainText().strip(),
             "p_status": STATUS_MAP.get(form_cad_os.cmbStatus.currentText(), "aguardando"),
-        }).execute()
+        }, form_cad_os.txtCodigoVinculo.text())
         QMessageBox.information(form_cad_os, "Sucesso", "Ordem de serviço criada.")
         form_cad_os.close()
         carregar_dashboard()
-    except Exception:
-        QMessageBox.warning(form_cad_os, "Ordem de serviço", "Não foi possível salvar. Confira placa, cliente e conexão. O cadastro precisa estar aprovado; uma placa já atendida deve manter o mesmo cliente.")
+    except Exception as error:
+        QMessageBox.warning(form_cad_os, "Ordem de serviço", order_error(error))
 
 
 # ==========================================
