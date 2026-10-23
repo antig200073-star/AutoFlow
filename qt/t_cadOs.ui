@@ -99,11 +99,24 @@
         </size>
        </property>
        <property name="placeholderText">
-        <string>Modelo / Ano (ex: Civic 2.0 2020)</string>
+        <string>Marca / Modelo / Ano</string>
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="btnConsultarPlaca">
+       <property name="text"><string>Buscar</string></property>
+       <property name="toolTip"><string>Consultar novamente os dados da placa</string></property>
+       <property name="autoDefault"><bool>false</bool></property>
+      </widget>
+     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="lblConsultaPlaca">
+     <property name="text"><string>Digite a placa para preencher os dados cadastrados no AutoFlow.</string></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
    </item>
    <item>
     <widget class="QLineEdit" name="txtCliente">
@@ -120,7 +133,7 @@
    </item>
    <item>
     <widget class="QLabel" name="lblCodigoVinculo">
-     <property name="text"><string>Cliente com conta: peça o código em Meus veículos → Vincular à oficina.</string></property>
+     <property name="text"><string>Primeiro atendimento: peça o código em Meus veículos → Vincular à oficina.</string></property>
      <property name="wordWrap"><bool>true</bool></property>
     </widget>
    </item>

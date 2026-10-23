@@ -11,6 +11,7 @@ from database import supabase
 from workshop_auth import current_workshop, require_approved, register_workshop, STATUS_MESSAGES
 from order_rows import order_row_values, format_entry_date
 from order_service import create_order, order_error
+from order_autofill import OrderAutofill
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -364,6 +365,8 @@ def abrir_cad_os():
     form_cad_os.show()
 
 def salvar_ordem_servico():
+    if not order_autofill.can_submit():
+        return
     if not acesso_aprovado():
         return
     try:
@@ -394,6 +397,7 @@ form = uic.loadUi(str(BASE_DIR / "t_loguin.ui"))
 form_cad = uic.loadUi(str(BASE_DIR / "t_cad.ui"))
 form_prin = uic.loadUi(str(BASE_DIR / "t_prin.ui"))
 form_cad_os = uic.loadUi(str(BASE_DIR / "t_cadOs.ui"))
+order_autofill = OrderAutofill(form_cad_os, supabase)
 form_patio = uic.loadUi(str(BASE_DIR / "t_veipatio.ui"))
 
 # Logo original e apresentação consistente nas janelas.
