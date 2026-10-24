@@ -5,6 +5,8 @@ import { vehicleError, vehicleRemovalPrompt, vehicleRemovalError } from '../../w
 import '../../web/public/assets/js/vehicle-registration.js';
 import '../../web/public/assets/js/vehicle-link.js';
 import '../../web/public/assets/css/vehicles.css';
+import { Capacitor } from '@capacitor/core';
+import { applyNativeDialogInsets } from './native/navigation';
 
 export default function Veiculos() {
   const registration = useRef(null);
@@ -43,6 +45,11 @@ export default function Veiculos() {
     const modal = registration.current;
     modal.service = vehicleService;
     workshopLink.current.service = vehicleService;
+    if (Capacitor.isNativePlatform()) {
+      applyNativeDialogInsets(modal);
+      applyNativeDialogInsets(workshopLink.current);
+      modal.shadowRoot.getElementById('choose').textContent = 'Escolher foto do celular';
+    }
     const saved = event => {
       revision.current++;
       setLoading(false);

@@ -36,6 +36,12 @@ npm run dev
 
 Para gerar a versão de produção, execute `npm run build`. Para analisar o código, execute `npm run lint`. Os testes do mobile rodam com `npm test` dentro de `mobile/`.
 
+### Android (Capacitor)
+
+O Mobile também possui um projeto Android em `mobile/android/`. Com Node.js 22.12+, JDK 21 e Android SDK 36 configurados, execute `npm ci` e `npm run android:debug` dentro de `mobile/`. O APK fica em `mobile/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+Consulte [AutoFlow Android — configuração, testes e instalação](docs/ANDROID_APK.md) para os comandos completos, o retorno Google/Supabase, as dependências, as alterações e os limites da validação. O projeto completo é necessário, pois o Mobile usa componentes de veículos compartilhados com `web/`.
+
 ## Executar o site
 
 Sirva `web/public/` com um servidor local HTTP. Exemplo para visualizar a interface:

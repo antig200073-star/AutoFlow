@@ -7,7 +7,10 @@
   --af-surface: #FFFFFF;
   --af-border: #D7DBE0;
   --af-radius: 12px;
-  --af-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --af-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --af-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --af-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --af-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 html { color-scheme: light; }
 body { background: var(--af-background); color: var(--af-ink); font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
@@ -105,3 +108,22 @@ select option { background: #FFF; color: #16181D; }
   .evaluation-header { flex-wrap: wrap; gap: 8px; }
   .login-page .login-container { width: 100%; }
 }
+
+/* Somente no APK: mantém o layout web e acomoda barras, recortes e teclado. */
+.af-native body { min-height: 100dvh; background: #16181D;
+  padding-left: var(--af-safe-left); padding-right: var(--af-safe-right); }
+.af-native #root { padding-top: var(--af-safe-top); min-height: 100dvh; background: #16181D; }
+.af-native .af-app { background: var(--af-background); min-height: calc(100dvh - var(--af-safe-top)); }
+.af-native .dashboard-wrapper { min-height: calc(100dvh - var(--af-safe-top) - 72px); }
+.af-native .login-page { min-height: calc(100dvh - var(--af-safe-top)); padding-bottom: var(--af-safe-bottom); }
+.af-native .af-bottom-nav { padding-left: max(8px, var(--af-safe-left)); padding-right: max(8px, var(--af-safe-right)); }
+.af-native .af-mobile-dialog { max-height: calc(100dvh - var(--af-safe-top) - var(--af-safe-bottom) - 24px);
+  max-width: calc(100vw - var(--af-safe-left) - var(--af-safe-right) - 24px);
+  margin-top: max(12px, var(--af-safe-top)); margin-bottom: max(12px, var(--af-safe-bottom)); }
+.af-native input, .af-native select, .af-native textarea { scroll-margin-block: 24px; }
+.af-native.af-keyboard-open .af-bottom-nav { display: none; }
+.af-native.af-keyboard-open .af-app main { padding-bottom: 24px; }
+.af-connection-banner { background: #FFF4D8; color: #684500; padding: 12px 16px; font-size: 14px; }
+.af-native-error { background: #FBEAEA; color: #A61F1F; padding: 12px 16px; }
+.af-native-error button { margin-top: 8px; }
+.af-native #root > main { background: var(--af-background); }

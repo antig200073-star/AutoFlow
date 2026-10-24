@@ -24,7 +24,7 @@ export function friendlyError(error, fallback = 'Não foi possível concluir a o
   return message || fallback;
 }
 
-export function createClientService(db) {
+export function createClientService(db, { emailRedirectTo } = {}) {
   async function currentUser() {
     const { data, error } = await db.auth.getUser();
     if (error) throw error;
@@ -150,7 +150,7 @@ export function createClientService(db) {
     const saved = { nome: data.nome, email: user.email || data.email, telefone: data.num_tel || '' };
     const changedEmail = email !== (user.email || '').toLowerCase();
     if (changedEmail) {
-      const { error: authError } = await db.auth.updateUser({ email });
+      const { error: authError } = await db.auth.updateUser({ email }, emailRedirectTo ? { emailRedirectTo } : undefined);
       if (authError) return { profile: saved, warning: true,
         message: `Nome e telefone salvos. Não foi possível solicitar a troca do e-mail: ${friendlyError(authError)}` };
     }

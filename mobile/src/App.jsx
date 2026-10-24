@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
-import { loginUser, logoutUser } from './services/api';
+import { loginUser, loginWithGoogle, logoutUser } from './services/api';
 import Cad from './Cad';
 import Dash from './dash';
 import Veiculos from './Veiculos';
@@ -9,6 +9,8 @@ import Avaliacoes from './Avaliacoes';
 import Perfil from './Perfil';
 import Brand from './Brand';
 import BottomNavigation from './BottomNavigation';
+import NativeBridge from './native/NativeBridge';
+import { createPageHistory } from './native/navigation';
 
 // Componente da tela de Login
 function Login({ onNavigate }) {
@@ -103,8 +105,7 @@ function Login({ onNavigate }) {
             if (submitting.current) return;
             submitting.current = true; setBusy(true); setMessage('');
             try {
-              const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
-              if (error) throw error;
+              await loginWithGoogle();
             } catch { setMessage('Não foi possível entrar com o Google. Tente novamente.'); }
             finally { submitting.current = false; setBusy(false); }
           }}
@@ -120,13 +121,25 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [history] = useState(createPageHistory);
+  const goToPage = page => setCurrentPage(history.visit(page));
+  const goBack = () => {
+    const previous = history.back();
+    if (!previous) return false;
+    setCurrentPage(previous);
+    return true;
+  };
   useEffect(() => {
     let mounted = true, revision = 0;
     const applySession = user => {
       if (!mounted) return;
       setAuthenticated(Boolean(user)); setChecking(false);
-      setCurrentPage(page => user ? (['login', 'cadastro'].includes(page) ? 'dash' : page)
-        : (page === 'cadastro' ? page : 'login'));
+      setCurrentPage(page => {
+        const next = user ? (['login', 'cadastro'].includes(page) ? 'dash' : page)
+          : (page === 'cadastro' ? page : 'login');
+        if (next !== page || (!user && next === 'login')) history.reset(next);
+        return next;
+      });
     };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Não faz consultas dentro do callback de autenticação.
@@ -139,30 +152,34 @@ export default function App() {
       if (revision === initialRevision) applySession(data.user);
     }).catch(() => { if (revision === initialRevision) applySession(null); });
     return () => { mounted = false; subscription.unsubscribe(); };
-  }, []);
+  }, [history]);
   const navigate = async (page) => {
     if (page === 'login') {
       try { await logoutUser(); }
       catch { window.alert('Não foi possível encerrar a sessão. Tente novamente.'); return; }
+      history.reset('login');
     }
-    setCurrentPage(page);
+    goToPage(page);
   };
-  if (checking) return <main><p role="status" className="empty-state">Verificando sua sessão…</p></main>;
   const page = authenticated ? currentPage : (currentPage === 'cadastro' ? 'cadastro' : 'login');
   const authenticatedPage = authenticated && !['login', 'cadastro'].includes(page);
 
   return (
+    <>
+    <NativeBridge onBack={goBack} authenticatedPage={authenticatedPage} />
+    {checking ? <main><p role="status" className="empty-state">Verificando sua sessão…</p></main> :
     <div className={authenticatedPage ? 'af-app' : 'af-auth'}>
       {authenticatedPage && <header className="af-app-header"><Brand compact /><span>Área do cliente</span></header>}
-      {page === 'login' && <Login onNavigate={setCurrentPage} />}
-      {page === 'cadastro' && <Cad onNavigate={setCurrentPage} />}
-      {page === 'dash' && <Dash onNavigate={setCurrentPage} />}
+      {page === 'login' && <Login onNavigate={goToPage} />}
+      {page === 'cadastro' && <Cad onNavigate={goToPage} />}
+      {page === 'dash' && <Dash onNavigate={goToPage} />}
       {page === 'veiculos' && <Veiculos />}
       {page === 'oficinas' && <Oficinas />}
       {page === 'avaliacoes' && <Avaliacoes />}
       {page === 'perfil' && <Perfil onNavigate={navigate} />}
-      {page === 'servicos' && <Dash onNavigate={setCurrentPage} serviceOnly />}
-      {authenticatedPage && <BottomNavigation currentPage={page} onNavigate={setCurrentPage} />}
-    </div>
+      {page === 'servicos' && <Dash onNavigate={goToPage} serviceOnly />}
+      {authenticatedPage && <BottomNavigation currentPage={page} onNavigate={goToPage} />}
+    </div>}
+    </>
   );
 }

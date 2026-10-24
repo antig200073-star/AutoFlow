@@ -1,0 +1,31 @@
+{
+  "appId": "br.com.autoflow.app",
+  "appName": "AutoFlow",
+  "webDir": "dist",
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#16181D",
+    "allowMixedContent": false,
+    "minWebViewVersion": 111
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "LIGHT"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#000000",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "FIT_CENTER",
+      "showSpinner": false
+    },
+    "Keyboard": { "resizeOnFullScreen": true }
+  }
+}
