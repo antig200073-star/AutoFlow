@@ -12,6 +12,7 @@ from workshop_auth import current_workshop, require_approved, register_workshop,
 from order_rows import order_row_values, format_entry_date
 from order_service import create_order, order_error
 from order_autofill import OrderAutofill
+from chat_window import ChatWindow
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -422,6 +423,16 @@ form_cad.btnCadastrar.clicked.connect(cadastrar_usuario)
 form_cad.btnVoltar.clicked.connect(tela_login)
 
 # Eventos - Tela Principal (Dashboard)
+def abrir_chat_oficina():
+    if acesso_aprovado():
+        ChatWindow(supabase, oficina_logada['id'], form_prin).exec_()
+
+btn_chat = QtWidgets.QPushButton('Chat com clientes', form_prin)
+form_prin.statusBar().addPermanentWidget(btn_chat) if hasattr(form_prin, 'statusBar') else None
+if not hasattr(form_prin, 'statusBar'):
+    btn_chat.setGeometry(12, 12, 150, 32)
+btn_chat.clicked.connect(abrir_chat_oficina)
+
 form_prin.btnNovaOS.clicked.connect(abrir_cad_os)
 form_prin.btnNovoVeiculo.clicked.connect(abrir_veipatio)
 form_prin.btnSair.clicked.connect(tela_login)
