@@ -1,0 +1,12 @@
+.af-chat{margin:1rem 0;padding:1rem;border:1px solid #d1d5db;border-radius:12px;background:#fff;color:#16181d}
+.af-chat-header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.af-chat-header h2{font-size:1.1rem;margin:0}
+.af-chat-messages{min-height:200px;max-height:350px;overflow:auto;display:flex;flex-direction:column;gap:.6rem;padding:.8rem 0}
+.af-chat-messages article{max-width:86%;padding:.6rem .8rem;border-radius:12px;overflow-wrap:anywhere;background:#f3f4f6}
+.af-chat-messages article p{margin:0 0 .3rem}
+.af-chat-messages small{color:#555}
+.af-chat-self{align-self:flex-end;background:#f9e2e2!important}
+.af-chat-other{align-self:flex-start}
+.af-chat-form{display:flex;flex-direction:column;gap:.5rem}
+.af-chat-form textarea{width:100%;box-sizing:border-box;min-height:60px;background:#fff;color:#111;border:1px solid #9ca3af;border-radius:8px;padding:.7rem}
+.af-chat-form button{align-self:flex-end;background:#c62828;color:#fff;border:0;border-radius:8px;padding:.65rem 1.2rem;cursor:pointer}
