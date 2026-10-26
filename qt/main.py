@@ -12,6 +12,7 @@ from workshop_auth import current_workshop, require_approved, register_workshop,
 from order_rows import order_row_values, format_entry_date
 from order_service import create_order, order_error
 from order_autofill import OrderAutofill
+from order_report import generate_order_report, visible_order_rows, visible_order_records
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -152,7 +153,7 @@ def carregar_ordens_na_tabela():
     response = (
         supabase.table("ordens_servico")
         .select(
-            "id,status,descricao_problema,data_entrada,"
+            "id,status,descricao_problema,data_entrada,data_saida,"
             "tb_veiculo!ordens_servico_veiculo_id_fkey(placa,marca,modelo),"
             "tb_cli!ordens_servico_cliente_id_fkey(nome)"
         )
@@ -170,6 +171,8 @@ def carregar_ordens_na_tabela():
         grid.insertRow(row_index)
         for column, value in enumerate(order_row_values(order)):
             cell = QTableWidgetItem(str(value))
+            if column == 0:
+                cell.setData(Qt.UserRole, order)
             cell.setFlags(cell.flags() & ~Qt.ItemIsEditable)
             cell.setToolTip(str(value))
             grid.setItem(row_index, column, cell)
@@ -187,6 +190,44 @@ def filtrar_ordens(texto):
             for coluna in range(grid.columnCount())
         ]
         grid.setRowHidden(linha, termo not in " ".join(campos).casefold())
+
+
+def exportar_relatorio_os():
+    """Atualiza os dados da oficina autorizada e exporta a busca atual."""
+    if not acesso_aprovado():
+        return
+    btn_relatorio.setEnabled(False)
+    try:
+        carregar_ordens_na_tabela()
+        rows = visible_order_rows(form_prin.gridOS)
+        records = visible_order_records(form_prin.gridOS)
+        if not rows:
+            QMessageBox.information(form_prin, "Relatório", "Não há ordens para a busca atual.")
+            return
+        workshop_name = oficina_logada.get("nome") or "Oficina"
+        search = form_prin.txtBuscar.text()
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            form_prin, "Salvar relatório de O.S.",
+            str(Path.home() / f"AutoFlow_Ordens_{date.today().isoformat()}.pdf"),
+            "Relatório PDF (*.pdf)")
+        if not path:
+            return
+        destination = Path(path)
+        if destination.suffix.lower() != ".pdf":
+            destination = destination.with_name(destination.name + ".pdf")
+            if destination.exists() and QMessageBox.question(
+                form_prin, "Substituir arquivo?", f"O arquivo {destination.name} já existe. Substituir?"
+            ) != QMessageBox.Yes:
+                return
+        result = generate_order_report(destination, rows, workshop_name, search=search, records=records)
+        QMessageBox.information(form_prin, "Relatório gerado", f"PDF salvo em:\n{result}")
+    except ImportError:
+        QMessageBox.warning(form_prin, "Dependência", "Instale as dependências: python -m pip install -r qt/requirements.txt")
+    except Exception as error:
+        print("Falha ao gerar relatório:", repr(error), file=sys.stderr)
+        QMessageBox.warning(form_prin, "Relatório", "Não foi possível gerar o PDF. Confira a conexão, a pasta e se o arquivo está aberto.")
+    finally:
+        btn_relatorio.setEnabled(True)
 
 
 def carregar_dashboard():
@@ -422,6 +463,12 @@ form_cad.btnCadastrar.clicked.connect(cadastrar_usuario)
 form_cad.btnVoltar.clicked.connect(tela_login)
 
 # Eventos - Tela Principal (Dashboard)
+btn_relatorio = QtWidgets.QPushButton("Relatório de O.S. (PDF)", form_prin)
+btn_relatorio.setObjectName("btnRelatorioOS")
+btn_relatorio.setProperty("class", "menuButton")
+btn_relatorio.setToolTip("Exporta a busca atual entre as 200 O.S. mais recentes.")
+form_prin.verticalLayoutSidebar.insertWidget(6, btn_relatorio)
+btn_relatorio.clicked.connect(exportar_relatorio_os)
 form_prin.btnNovaOS.clicked.connect(abrir_cad_os)
 form_prin.btnNovoVeiculo.clicked.connect(abrir_veipatio)
 form_prin.btnSair.clicked.connect(tela_login)
@@ -470,3 +517,4 @@ access_timer.start()
 
 form.show()
 sys.exit(app.exec_())
+
