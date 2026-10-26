@@ -1,6 +1,6 @@
 # AutoFlow Android — preparação e validação
 
-Trabalho realizado na branch `feature/android-apk`, a partir de `main` no commit `22ea622310ba7f6dd95bab44670691783dd41f8f`. A branch principal não foi alterada. Não houve migração, alteração de configuração do Supabase, escrita em dados de produção, merge ou publicação de versão.
+Preparação realizada originalmente na branch `feature/android-apk`, a partir de `main` no commit `22ea622310ba7f6dd95bab44670691783dd41f8f`, e integrada à `main` em 26/10/2026. As alterações de `fix/mobile-order-client-link` também estão incluídas na `main`. Use `main` para baixar a versão consolidada. Esta integração não alterou configurações ou dados do Supabase nem publicou uma nova versão do aplicativo.
 
 ## Estrutura real preservada
 
@@ -136,7 +136,7 @@ Baixe o repositório completo: `mobile/` importa os arquivos compartilhados de `
 Pré-requisitos: Node.js 22.12 ou superior, Android Studio 2025.2.1 ou superior, JDK 21 e Android SDK Platform 36. Pelo SDK Manager, instale também Platform Tools e Android SDK Build Tools 35.0.0 (padrão usado pelo Android Gradle Plugin 8.13.0). O Gradle Wrapper baixa a versão correta do Gradle.
 
 ```sh
-git clone --branch feature/android-apk https://github.com/antig200073-star/AutoFlow.git
+git clone --branch main https://github.com/antig200073-star/AutoFlow.git
 cd AutoFlow/mobile
 npm ci
 npm run android:debug
