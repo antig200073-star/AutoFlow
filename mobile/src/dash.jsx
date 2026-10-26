@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Chat from './Chat';
 import { clientService, friendlyError } from './services/api';
 import { maintenanceStatuses } from './services/client-service';
 import { startDashboardRefresh } from './services/dashboard-refresh';
@@ -8,6 +9,7 @@ export default function Dash({ onNavigate, serviceOnly = false }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   useEffect(() => startDashboardRefresh({
     load: () => clientService.loadDashboard(),
     onData: result => { setData(result); setError(''); setLoading(false); },
@@ -34,6 +36,7 @@ export default function Dash({ onNavigate, serviceOnly = false }) {
           <h3>O.S. nº {order.id} — {order.vehicleName}</h3>
           {order.plate && <p>Placa: {order.plate}</p>}
           <p>Status atual: <strong>{order.status}</strong></p>
+          <button type="button" onClick={() => setSelectedOrder(order.id)}>Conversar com a oficina</button>
           <ol className="progress-steps" aria-label={`Etapas da ordem de serviço nº ${order.id}`}>
             {maintenanceStatuses.map((step, index) => {
               const current = maintenanceStatuses.indexOf(order.status);
@@ -44,6 +47,7 @@ export default function Dash({ onNavigate, serviceOnly = false }) {
         </article>)}
       </div>
     </section>}
+    {selectedOrder && <Chat key={selectedOrder} orderId={selectedOrder} onClose={() => setSelectedOrder(null)} />}
     <div className="af-service-actions">
       <button type="button" onClick={() => onNavigate('avaliacoes')}>Avaliar serviços</button>
       <button type="button" className="profile-link" onClick={() => onNavigate('veiculos')}>Histórico dos veículos</button>
