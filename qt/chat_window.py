@@ -1,5 +1,6 @@
 """Janela de mensagens da oficina por ordem de serviço (Supabase Auth + RLS)."""
 from PyQt5 import QtWidgets, QtCore
+from html import escape
 
 
 class ChatWindow(QtWidgets.QDialog):
@@ -69,8 +70,8 @@ class ChatWindow(QtWidgets.QDialog):
             self.messages.clear()
             for row in rows or []:
                 sender = "Oficina" if row["remetente_id"] == self.user_id else "Cliente"
-                self.messages.append(f"{sender} ({row['criada_em'][:16]}):")
-                self.messages.append(row["conteudo"].replace("<","&lt;").replace(">","&gt;"))
+                self.messages.append(escape(f"{sender} ({row['criada_em'][:16]}):"))
+                self.messages.append(escape(row["conteudo"]))
                 self.messages.append("")
             self.status.setText("")
         except Exception:
