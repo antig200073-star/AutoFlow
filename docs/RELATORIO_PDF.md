@@ -20,6 +20,14 @@ python main.py
 O botão confere o acesso da oficina e atualiza a tabela antes de exportar. O PDF
 contém número da O.S., placa, veículo, cliente, serviço/defeito, status e entrada,
 além de oficina, emissão, busca aplicada, total, resumo por status e páginas.
+Inclui dois gráficos vetoriais de barras: entradas e saídas por dia nos últimos
+sete dias (UTC-03:00) e quantidade de atendimentos em cada status. A movimentação
+usa `data_entrada` e `data_saida`, que já são registradas no sistema. Uma saída
+sem data não é inventada a partir do status: o PDF informa datas ausentes/inválidas.
+Cada O.S. conta como um atendimento; o mesmo veículo pode ter várias O.S.
+O gráfico de status inclui todas as ordens exportadas; o de movimentação conta
+apenas eventos dessas ordens dentro dos sete dias. Portanto, os gráficos refletem
+o mesmo filtro e limite da tabela, não o movimento integral da oficina.
 Exporta somente as linhas visíveis das 200 ordens mais recentes por número,
 preservando a busca e a ordenação da tela. Não é uma exportação integral do banco.
 Sem resultados, o aplicativo avisa e não cria um arquivo vazio.
@@ -41,7 +49,8 @@ gerador usado pelo botão. Os registros não são inseridos no Supabase.
 - `qt/requirements.txt`: inclui ReportLab 4.4.9.
 - `qt/demo_order_report.py`: exemplo reproduzível para a atividade.
 - `tests/test_order_report.py`: filtro, lista vazia, caracteres especiais,
-  descrições longas, paginação e preservação de arquivo em caso de entrada inválida.
+  descrições longas, paginação, datas de movimentação, fuso horário, status sem
+  ocorrências e preservação de arquivo em caso de entrada inválida.
 
 ```bash
 python -m unittest discover -s tests -p 'test_order_report.py'

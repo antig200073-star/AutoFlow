@@ -12,7 +12,7 @@ from workshop_auth import current_workshop, require_approved, register_workshop,
 from order_rows import order_row_values, format_entry_date
 from order_service import create_order, order_error
 from order_autofill import OrderAutofill
-from order_report import generate_order_report, visible_order_rows
+from order_report import generate_order_report, visible_order_rows, visible_order_records
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -153,7 +153,7 @@ def carregar_ordens_na_tabela():
     response = (
         supabase.table("ordens_servico")
         .select(
-            "id,status,descricao_problema,data_entrada,"
+            "id,status,descricao_problema,data_entrada,data_saida,"
             "tb_veiculo!ordens_servico_veiculo_id_fkey(placa,marca,modelo),"
             "tb_cli!ordens_servico_cliente_id_fkey(nome)"
         )
@@ -171,6 +171,8 @@ def carregar_ordens_na_tabela():
         grid.insertRow(row_index)
         for column, value in enumerate(order_row_values(order)):
             cell = QTableWidgetItem(str(value))
+            if column == 0:
+                cell.setData(Qt.UserRole, order)
             cell.setFlags(cell.flags() & ~Qt.ItemIsEditable)
             cell.setToolTip(str(value))
             grid.setItem(row_index, column, cell)
@@ -198,6 +200,7 @@ def exportar_relatorio_os():
     try:
         carregar_ordens_na_tabela()
         rows = visible_order_rows(form_prin.gridOS)
+        records = visible_order_records(form_prin.gridOS)
         if not rows:
             QMessageBox.information(form_prin, "Relatório", "Não há ordens para a busca atual.")
             return
@@ -216,7 +219,7 @@ def exportar_relatorio_os():
                 form_prin, "Substituir arquivo?", f"O arquivo {destination.name} já existe. Substituir?"
             ) != QMessageBox.Yes:
                 return
-        result = generate_order_report(destination, rows, workshop_name, search=search)
+        result = generate_order_report(destination, rows, workshop_name, search=search, records=records)
         QMessageBox.information(form_prin, "Relatório gerado", f"PDF salvo em:\n{result}")
     except ImportError:
         QMessageBox.warning(form_prin, "Dependência", "Instale as dependências: python -m pip install -r qt/requirements.txt")
