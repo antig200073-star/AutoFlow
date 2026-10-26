@@ -1,0 +1,7 @@
+.chat-layout{max-width:700px;margin:2rem auto;padding:1.3rem;background:#fff;border-radius:14px;color:#16181d}
+#chat-list{height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:.7rem;padding:1rem;border:1px solid #d1d5db;border-radius:8px;margin:1rem 0}
+#chat-list article{max-width:85%;background:#f3f4f6;border-radius:10px;padding:.7rem;overflow-wrap:anywhere}
+#chat-list article.mine{align-self:flex-end;background:#fde8e8}
+#chat-list article p{margin:.2rem 0}#chat-list small{color:#555}
+#chat-form{display:grid;gap:.6rem}#chat-text{display:block;min-height:80px;padding:.75rem;color:#111;background:#fff;border:1px solid #9ca3af}
+#chat-error{color:#b91c1c}#chat-send{background:#c62828;color:white;border:0;padding:.8rem;border-radius:8px;cursor:pointer}
