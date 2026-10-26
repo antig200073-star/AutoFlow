@@ -5,7 +5,7 @@
     target.querySelectorAll('.maintenance-card, article').forEach(card => {
       if (card.querySelector('.af-chat-link')) return;
       const heading = card.querySelector('h3, h4');
-      const match = heading?.textContent?.match(/(?:O\\.S\\.|OS|nº)\\s*(?:nº\\s*)?(\\d+)/i);
+      const match = heading?.textContent?.match(/(?:O\.S\.|OS|nº)\s*(?:nº\s*)?(\d+)/i);
       if (!match) return;
       const link = document.createElement('a');
       link.className = 'af-chat-link profile-link';
