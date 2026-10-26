@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat | AutoFlow</title><link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/identity.css">
+<link rel="stylesheet" href="assets/css/chat.css"></head>
+<body><main class="chat-layout"><p><a href="dashboard.html">← Voltar para o painel</a></p>
+<h1>Conversa sobre a manutenção</h1><p id="chat-order"></p>
+<p id="chat-error" role="alert"></p><div id="chat-list" role="log" aria-live="polite"></div>
+<form id="chat-form"><label for="chat-text">Mensagem para a oficina</label>
+<textarea id="chat-text" maxlength="2000" required></textarea>
+<button type="submit" id="chat-send">Enviar mensagem</button></form></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/integration.js"></script>
+<script src="assets/js/chat.js"></script></body></html>
