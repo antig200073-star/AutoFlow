@@ -19,7 +19,7 @@ test('login, navegação, O.S., histórico, oficinas, avaliações e saída', as
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await page.getByRole('button', { name: 'Vincular à oficina', exact: true }).click();
   await page.getByRole('button', { name: 'Gerar código', exact: true }).click();
-  await expect(page.getByLabel('Código de vínculo')).toHaveValue('TESTE-CODIGO');
+  await expect(page.getByLabel('Código de vínculo')).toHaveValue('012345');
   await page.getByRole('button', { name: 'Fechar', exact: true }).click();
   await page.getByRole('button', { name: 'Oficinas', exact: true }).click();
   await page.getByRole('button', { name: 'Ver detalhes e avaliações' }).click();

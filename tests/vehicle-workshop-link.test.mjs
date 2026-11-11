@@ -37,6 +37,12 @@ test('vínculo de O.S. com veículo do cliente sem duplicar cadastros (PostgreSQ
     grant select on tb_cli,oficinas,ordens_servico to authenticated;
   `);
   await db.exec(await readFile(new URL('../supabase/migrations/20261021121433_vehicle_workshop_link.sql',import.meta.url),'utf8'));
+  const legacyCode='12345678-1234-4abc-8def-123456789abc';
+  await db.query("insert into private.vehicle_workshop_links values(16,2,$1,$2,now()+interval '15 minutes',null)",[stranger,legacyCode]);
+  for (const file of ['20261023154200_workshop_vehicle_lookup.sql','20261111231622_vehicle_workshop_link_six_digits.sql']) {
+    await db.exec(await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8'));
+  }
+  assert.equal((await db.query('select code from private.vehicle_workshop_links where vehicle_id=16')).rows[0].code,legacyCode);
   await db.exec(`create function public.create_workshop_order(p_plate text,p_model text,p_client text,p_problem text,p_status text default 'aguardando')
     returns bigint language sql security invoker set search_path='' as $$select private.create_workshop_order(p_plate,p_model,p_client,p_problem,p_status)$$;
     revoke all on function private.create_workshop_order(text,text,text,text,text),public.create_workshop_order(text,text,text,text,text) from public,anon;
@@ -48,6 +54,11 @@ test('vínculo de O.S. com veículo do cliente sem duplicar cadastros (PostgreSQ
   const issue = id => db.query('select issue_vehicle_workshop_link($1) as link',[id]).then(r => r.rows[0].link);
   const createLinked = (code,plate='ABC1D23') => db.query("select create_workshop_order_with_link($1,'Modelo digitado','Cliente com conta','Revisão','em_manutencao',$2) as id",[plate,code]).then(r => r.rows[0].id);
   const createUnlinked = (plate='ABC1D23',name='Cliente com conta') => db.query("select create_workshop_order($1,'Modelo',$2,'Revisão','em_analise') as id",[plate,name]).then(r => r.rows[0].id);
+  await t.test('migração preserva UUID vigente e permite concluir o vínculo antigo',async()=>{
+    const id=await asUser(workshop,()=>createLinked(legacyCode.toUpperCase(),'DEF4G56'));
+    assert.deepEqual((await db.query('select cliente_id,veiculo_id from ordens_servico where id=$1',[id])).rows[0],{cliente_id:2,veiculo_id:16});
+    await db.exec('delete from private.vehicle_workshop_links where vehicle_id=16');
+  });
   let link;
   await t.test('reproduz O.S. invisível por duplicação e bloqueia nova duplicata mesmo com atendimento legado', async () => {
     await asUser(customer, async()=>assert.equal((await db.query('select id from ordens_servico where id=5')).rows.length,0));
@@ -60,9 +71,58 @@ test('vínculo de O.S. com veículo do cliente sem duplicar cadastros (PostgreSQ
     await asUser('', ()=>assert.rejects(issue(14),/permission denied/),'anon');
     await asUser(customer, async()=>{
       await assert.rejects(db.query('select * from private.vehicle_workshop_links'),/permission denied/);
-      link=await issue(14); assert.match(link.code,/^[a-f0-9-]{36}$/);
+      link=await issue(14); assert.match(link.code,/^[0-9]{6}$/);
       assert.ok(new Date(link.expires_at)>new Date());
+      assert.ok(Math.abs(new Date(link.expires_at)-Date.now()-15*60*1000)<5000);
+      await assert.rejects(db.query('select private.throttle_vehicle_link_check(3)'),/permission denied/);
     });
+  });
+  await t.test('geração preserva seis posições, troca o anterior e não repete códigos entre veículos',async()=>{
+    let previous=link.code;
+    for(let n=0;n<30;n++) {
+      link=await asUser(customer,()=>issue(14));
+      assert.match(link.code,/^[0-9]{6}$/);
+      assert.notEqual(link.code,previous); previous=link.code;
+      const other=await asUser(stranger,()=>issue(16));
+      assert.notEqual(link.code,other.code);
+    }
+    await db.exec('delete from private.vehicle_workshop_links where vehicle_id=16');
+  });
+  await t.test('colisão com outro veículo é sorteada novamente sem perder a autorização anterior',async()=>{
+    await db.exec('begin');
+    try {
+      await db.query("insert into private.vehicle_workshop_links values(16,2,$1,'000001',now()+interval '15 minutes',null)",[stranger]);
+      await db.exec(`update private.vehicle_workshop_links set code='000002' where vehicle_id=14;
+        create sequence private.test_collision_attempt;
+        create function private.force_link_collision() returns trigger language plpgsql as $$begin
+          if nextval('private.test_collision_attempt')=1 then new.code:='000001'; end if;
+          return new;
+        end$$;
+        create trigger test_collision before insert on private.vehicle_workshop_links
+          for each row execute function private.force_link_collision();`);
+      const fresh=await asUser(customer,()=>issue(14));
+      assert.match(fresh.code,/^[0-9]{6}$/);
+      assert.notEqual(fresh.code,'000001'); assert.notEqual(fresh.code,'000002');
+      assert.equal((await db.query('select last_value from private.test_collision_attempt')).rows[0].last_value,2);
+      assert.equal((await db.query('select count(distinct code)::int as total from private.vehicle_workshop_links')).rows[0].total,2);
+    } finally {await db.exec('rollback');}
+  });
+  await t.test('zeros à esquerda chegam à O.S.; valores incompletos e letras são rejeitados',async()=>{
+    await db.exec('begin');
+    try {
+      await db.exec("update private.vehicle_workshop_links set code='000042' where vehicle_id=14");
+      await asUser(workshop,async()=>{
+        for(const code of ['42','12345','1234567','abc123','12 3456']) {
+          await db.exec('savepoint invalid_code');
+          await assert.rejects(createLinked(code),/inválido/);
+          await db.exec('rollback to savepoint invalid_code');
+        }
+        const started=Date.now();
+        const id=await createLinked(' 000042 ');
+        assert.ok(Date.now()-started>=900,'validação respeita o intervalo por oficina');
+        assert.equal((await db.query('select veiculo_id from ordens_servico where id=$1',[id])).rows[0].veiculo_id,14);
+      });
+    } finally {await db.exec('rollback');}
   });
   await t.test('oficina bloqueada, placa diferente e token inexistente não consomem autorização', async () => {
     await asUser(blocked,()=>assert.rejects(createLinked(link.code),/sem aprovação/));

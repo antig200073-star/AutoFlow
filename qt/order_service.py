@@ -35,6 +35,8 @@ def lookup_error(error):
         return "A consulta por placa precisa ser ativada pelo responsável do AutoFlow."
     if "Oficina sem aprovação" in message:
         return "O acesso da oficina precisa ser conferido. Entre novamente."
+    if "Aguarde um instante" in message:
+        return message
     return "Não foi possível consultar a placa. Confira a conexão e clique em Buscar para tentar novamente."
 
 def create_order(db, payload, link_code=""):

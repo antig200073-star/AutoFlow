@@ -25,7 +25,7 @@ test('consulta por placa respeita o vínculo da oficina e não altera cadastros'
       (4,2,'JKL1234',null,'Modelo antigo sem ano',null,null);
     insert into ordens_servico(oficina_id,cliente_id,veiculo_id,status) values(1,1,1,'entregue'),(2,2,4,'entregue');
   `);
-  for (const file of ['20261021121433_vehicle_workshop_link.sql','20261023154200_workshop_vehicle_lookup.sql']) {
+  for (const file of ['20261021121433_vehicle_workshop_link.sql','20261023154200_workshop_vehicle_lookup.sql','20261111231622_vehicle_workshop_link_six_digits.sql']) {
     await db.exec(await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8'));
   }
   async function asUser(uid,fn,role='authenticated') {
@@ -52,12 +52,19 @@ test('consulta por placa respeita o vínculo da oficina e não altera cadastros'
   let link;
   await t.test('prévia com código válido não consome autorização nem cria clientes, veículos ou O.S.',async()=>{
     link=await issue();
+    assert.match(link.code,/^[0-9]{6}$/);
     for(let i=0;i<2;i++) {
       const data=await asUser(workshop,()=>lookup('DEF4G56',link.code));
       assert.equal(data.client_name,'Cliente A'); assert.equal(data.year,2020);
     }
     assert.equal((await db.query('select used_at from private.vehicle_workshop_links')).rows[0].used_at,null);
     assert.deepEqual((await db.query('select (select count(*)::int from tb_cli) as clients,(select count(*)::int from tb_veiculo) as vehicles,(select count(*)::int from ordens_servico) as orders')).rows[0],{clients:2,vehicles:4,orders:2});
+  });
+  await t.test('consulta preserva zeros à esquerda e não aceita versões incompletas',async()=>{
+    await db.query("update private.vehicle_workshop_links set code='000042' where vehicle_id=2");
+    assert.deepEqual(await asUser(workshop,()=>lookup('DEF4G56','42')),{status:'invalid_link'});
+    assert.equal((await asUser(workshop,()=>lookup('DEF4G56','000042'))).client_name,'Cliente A');
+    link=await issue();
   });
   await t.test('código de outra placa, malformado e expirado não preenchem dados',async()=>{
     for(const [plate,code] of [['ABC1234',link.code],['DEF4G56','inválido']])

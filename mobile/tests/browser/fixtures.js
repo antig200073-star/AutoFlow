@@ -34,7 +34,7 @@ export async function mockApi(page) {
     else if (url.pathname === '/rest/v1/avaliacoes') body = request.method() === 'POST'
       ? [{ id: 1, ...request.postDataJSON(), created_at: '2026-10-24T00:00:00Z' }] : [];
     else if (url.pathname === '/rest/v1/rpc/workshop_public_reviews') body = [{ id: 1, nota: 5, comentario: 'Atendimento de teste', created_at: '2026-10-01T12:00:00Z' }];
-    else if (url.pathname === '/rest/v1/rpc/issue_vehicle_workshop_link') body = { code: 'TESTE-CODIGO', expires_at: '2026-10-24T01:00:00Z' };
+    else if (url.pathname === '/rest/v1/rpc/issue_vehicle_workshop_link') body = { code: '012345', expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
     else { await route.abort(); throw Error(`Requisição não simulada: ${request.method()} ${url.pathname}`); }
     if (request.headers().accept?.includes('vnd.pgrst.object+json') && Array.isArray(body)) body = body[0] ?? null;
     await route.fulfill({ status, contentType: 'application/json', headers, body: status === 204 || request.method() === 'HEAD' ? '' : JSON.stringify(body) });

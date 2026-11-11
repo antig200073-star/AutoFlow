@@ -5,7 +5,7 @@ Uma O.S. só aparece no web/mobile quando `ordens_servico.cliente_id` aponta par
 ## Primeiro atendimento de um veículo já cadastrado
 
 1. No web ou mobile, o cliente abre **Meus veículos → Vincular à oficina → Gerar código**.
-2. Entrega o código somente à oficina escolhida. O código expira em 15 minutos, vale uma vez e é invalidado se outro for gerado.
+2. Entrega o código de **6 números** (ex.: `012345`) somente à oficina escolhida. O código expira em 15 minutos, vale uma vez e é invalidado se outro for gerado.
 3. A oficina preenche a placa e o código no cadastro da O.S. do desktop.
 4. O banco usa os IDs do veículo e do proprietário autorizados pelo código. Não cria outra conta nem outro veículo.
 5. O acompanhamento aparece na conta do cliente. A oficina pode reutilizar o vínculo nos próximos atendimentos do mesmo veículo.
@@ -25,6 +25,10 @@ Veículos já atendidos pela oficina são preenchidos só pela placa. No primeir
 Ativar com `20261023154200_workshop_vehicle_lookup.sql` e atualizar o desktop. A consulta é somente leitura e não cria cliente, veículo ou ordem. Os dados preenchidos ficam protegidos contra edição no formulário da O.S.; alterações cadastrais devem ser feitas no cadastro de origem.
 
 ### Migrações do vínculo
+
+Aplicar também `20261111231622_vehicle_workshop_link_six_digits.sql` para gerar códigos numéricos de seis posições. Os zeros à esquerda são preservados no banco, na exibição, na cópia e na O.S. O componente `web/public/assets/js/vehicle-link.js` é compartilhado com o mobile e entra no APK durante o build.
+
+A geração criptográfica trata colisões com a restrição única do banco. A consulta pela placa e a abertura de O.S. conferem o novo formato e compartilham uma limitação de uma validação por segundo por oficina, inclusive em falhas; consultas simultâneas recebem uma mensagem para tentar novamente. A placa, a posse do veículo, a aprovação da oficina, a validade e o uso único continuam obrigatórios. UUIDs já emitidos seguem válidos até seu vencimento para permitir atualização gradual dos aplicativos.
 
 Aplicar a migração `20261021121433_vehicle_workshop_link.sql` e atualizar conjuntamente web, mobile e desktop. Publicar somente o front-end não ativa as RPCs.
 
