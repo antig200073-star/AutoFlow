@@ -3,3 +3,27 @@
 .maintenance-list > .maintenance-card { margin-top: 0; }
 .maintenance-list > .empty-state { margin-top: 16px; }
 .maintenance-card h3 { overflow-wrap: anywhere; }
+
+.service-details {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--af-border, #D7DBE0);
+}
+.service-details h4 { margin: 0 0 16px; font-size: 18px; color: var(--af-ink, #16181D); }
+.service-description { margin-bottom: 20px; }
+.service-description-label { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--af-muted, #586171); }
+.service-description-text { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.service-costs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.service-cost { padding: 16px 18px; background: var(--af-background, #F3F4F6); border: 1px solid var(--af-border, #D7DBE0); border-radius: 10px; min-width: 0; }
+.service-cost dt { margin-bottom: 8px; font-size: 14px; color: var(--af-muted, #586171); }
+.service-cost dd { margin: 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.service-cost-total { background: #FDF1F1; border-color: #E8B7B7; }
+.service-cost-total dt, .service-cost-total dd { color: #A61F1F; }
+.service-cost-note { margin: 12px 0 0; font-size: 12px; color: var(--af-muted, #586171); }
+
+@media (max-width: 640px) {
+    .service-costs { grid-template-columns: 1fr; }
+    .service-cost { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+    .service-cost dt { margin: 0; }
+    .service-cost dd { font-size: 21px; }
+}

@@ -185,7 +185,7 @@ no navegador. Nunca coloque service_role aqui.
             const [vehiclesResult, servicesResult] = await Promise.all([
                 db.from("tb_veiculo").select("id_veiculo", { count: "exact", head: true }).eq("cliente_id", client.id_cliente).is("excluido_em", null),
                 db.from("ordens_servico")
-                    .select("id, status, data_entrada, veiculo_id, tb_veiculo(marca, modelo, placa)")
+                    .select("id, status, data_entrada, veiculo_id, pecas_servicos, valor_mao_obra, valor_pecas, tb_veiculo(marca, modelo, placa)")
                     .eq("cliente_id", client.id_cliente)
                     .order("data_entrada", { ascending: false })
             ]);
@@ -204,7 +204,10 @@ no navegador. Nunca coloque service_role aqui.
                     vehicleId: order.veiculo_id,
                     vehicleName: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ") || vehicle.placa || "Veículo",
                     plate: vehicle.placa || "",
-                    status: statusToUI[order.status] || "Status não informado"
+                    status: statusToUI[order.status] || "Status não informado",
+                    serviceDescription: order.pecas_servicos || "",
+                    laborCost: order.valor_mao_obra ?? null,
+                    partsCost: order.valor_pecas ?? null
                 };
             });
 

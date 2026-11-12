@@ -332,6 +332,58 @@
         }
     }
 
+    const serviceCurrency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+    function serviceCostInCents(value) {
+        if (typeof value !== "number" && typeof value !== "string") return null;
+        if (typeof value === "string" && !value.trim()) return null;
+        const amount = Number(value);
+        const cents = Math.round(amount * 100);
+        return Number.isFinite(amount) && amount >= 0 && Number.isSafeInteger(cents) ? cents : null;
+    }
+
+    function createServiceDetails(order) {
+        const details = createElement("section", { className: "service-details" });
+        const heading = createElement("h4", { text: "Detalhamento do serviço" });
+        heading.id = `service-details-${order.id}`;
+        details.setAttribute("aria-labelledby", heading.id);
+
+        const description = createElement("div", { className: "service-description" });
+        description.append(
+            createElement("p", { className: "service-description-label", text: "Peças e serviços" }),
+            createElement("p", {
+                className: "service-description-text",
+                text: order.serviceDescription?.trim() || "A oficina ainda não informou as peças e os serviços."
+            })
+        );
+
+        const labor = serviceCostInCents(order.laborCost);
+        const parts = serviceCostInCents(order.partsCost);
+        // Soma em centavos para preservar a precisão dos valores em reais.
+        const total = labor !== null && parts !== null ? labor + parts : null;
+        const costs = createElement("dl", { className: "service-costs" });
+        [
+            ["Mão de obra", labor, false],
+            ["Valor das peças", parts, false],
+            ["Total do serviço", total, true]
+        ].forEach(([label, cents, isTotal]) => {
+            const item = createElement("div", {
+                className: `service-cost${isTotal ? " service-cost-total" : ""}`
+            });
+            item.append(
+                createElement("dt", { text: label }),
+                createElement("dd", { text: cents === null ? "Não informado" : serviceCurrency.format(cents / 100) })
+            );
+            costs.append(item);
+        });
+
+        details.append(heading, description, costs, createElement("p", {
+            className: "service-cost-note",
+            text: "Valores informados pela oficina."
+        }));
+        return details;
+    }
+
     function renderMaintenance(orders = []) {
         const container = document.querySelector("#maintenance-list");
         if (!container) return;
@@ -368,7 +420,7 @@
                 progress.append(step);
             });
 
-            article.append(orderTitle, statusLabel, progress);
+            article.append(orderTitle, statusLabel, progress, createServiceDetails(order));
             container.append(article);
         });
     }
