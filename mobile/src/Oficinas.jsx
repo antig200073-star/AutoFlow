@@ -52,7 +52,7 @@ export default function Oficinas() {
     <header className="page-header"><div><p>Localização</p><h1>Oficinas aprovadas</h1></div></header>
     <section><h2>Encontre uma oficina</h2>
       <div className="workshop-search-container"><label htmlFor="workshop-search">Nome ou endereço</label>
-        <input type="search" id="workshop-search" placeholder="Buscar por nome ou endereço..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+        <input type="search" id="workshop-search" maxLength={150} placeholder="Buscar por nome ou endereço..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
       {error && <div role="alert" className="message-error"><p>{error}</p><button type="button" onClick={() => { setLoading(true); setError(''); setRetry(n => n + 1); }}>Tentar novamente</button></div>}
       <div className="workshop-grid">{loading ? <p role="status" className="empty-state">Carregando oficinas…</p>
         : !error && !filtered.length ? <p className="empty-state">Nenhuma oficina encontrada.</p>

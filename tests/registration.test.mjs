@@ -76,7 +76,7 @@ test('cadastro demonstrativo só é permitido a administradores ou testadores au
   const r2 = await allowed.handler(request({action:'register_demo',cnpj:'00.000.000/0000-01',status:'aprovada'}));
   assert.equal(r2.status,201);
   assert.equal(allowed.writes[0].cnpj,'00000000000001');
-  assert.match(allowed.writes[0].nome,/^\\[TESTE\\]/);
+  assert.match(allowed.writes[0].nome,/^\[TESTE\]/);
   assert.equal(allowed.writes[0].status,'pendente');
   assert.equal(allowed.writes[0].verificacao_fonte,'AUTOFLOW_DEMO');
 });

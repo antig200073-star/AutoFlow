@@ -1,6 +1,7 @@
 """Consulta de placa em segundo plano, com descarte de respostas de formulários antigos."""
 from PyQt5.QtCore import QObject, QRunnable, QThreadPool, QTimer, QEvent, Qt, pyqtSignal, pyqtSlot
 from order_service import lookup_vehicle, lookup_error, normalize_plate, valid_plate, vehicle_description
+from input_rules import link_code_value
 
 
 class LookupSignals(QObject):
@@ -83,11 +84,21 @@ class OrderAutofill(QObject):
         self.form.btnConsultarPlaca.setEnabled(valid_plate(key[0]))
         self.form.lblConsultaPlaca.setText("Digite uma placa completa (ex.: ABC1234 ou ABC1D23).")
         if valid_plate(key[0]) and self.form.isVisible():
+            try:
+                link_code_value(key[1])
+            except ValueError as error:
+                self.form.lblConsultaPlaca.setText(str(error))
+                return
             self.form.lblConsultaPlaca.setText("Aguardando a consulta da placa…")
             self.timer.start()
 
     def request(self, force=False):
         if not self.form.isVisible() or not valid_plate(self.current_key()[0]):
+            return
+        try:
+            link_code_value(self.current_key()[1])
+        except ValueError as error:
+            self.form.lblConsultaPlaca.setText(str(error))
             return
         if self.current_key() != self.key:
             self.inputs_changed()

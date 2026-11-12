@@ -1,4 +1,5 @@
 import { createVehicleService } from '../../../web/public/assets/js/vehicle-service.js';
+import { normalizeEmail, validateRegistration } from '../../../web/public/assets/js/input-rules.js';
 import { supabase } from '../supabase';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
@@ -29,12 +30,16 @@ export async function loginWithGoogle() {
 }
 
 export async function loginUser(email, senha) {
+  try { email = normalizeEmail(email); }
+  catch (error) { return { success: false, message: error.message }; }
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
   if (error) return { success: false, message: friendlyError(error) };
   return { success: true, user: data.user };
 }
 
 export async function registerUser({ nome, telefone, email, senha }) {
+  try { ({ nome, telefone, email, senha } = validateRegistration({ nome, telefone, email, senha })); }
+  catch (error) { return { success: false, message: error.message }; }
   const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,

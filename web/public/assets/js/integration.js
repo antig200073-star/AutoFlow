@@ -97,12 +97,18 @@ no navegador. Nunca coloque service_role aqui.
 
     window.AutoFlowIntegration = {
         async login({ email, senha }) {
+            const { normalizeEmail } = await import('./input-rules.js');
+            try { email = normalizeEmail(email); }
+            catch (error) { return { success: false, message: error.message }; }
             const { error } = await db.auth.signInWithPassword({ email, password: senha });
             if (error) return { success: false, message: friendlyError(error) };
             return { success: true, redirect: "dashboard.html" };
         },
 
         async register({ nome, telefone, email, senha }) {
+            const { validateRegistration } = await import('./input-rules.js');
+            try { ({ nome, telefone, email, senha } = validateRegistration({ nome, telefone, email, senha })); }
+            catch (error) { return { success: false, message: error.message }; }
             const { data, error } = await db.auth.signUp({
                 email,
                 password: senha,
@@ -395,11 +401,13 @@ no navegador. Nunca coloque service_role aqui.
 
         async createEvaluation({ osId, nota, comentario }) {
             try {
+                const { textValue } = await import('./input-rules.js');
+                comentario = textValue(comentario, 'Comentário', 2000, 0, true);
                 const client = await requireClient();
                 const parsedOsId = Number(osId);
                 const parsedNota = Number(nota);
 
-                if (!Number.isInteger(parsedOsId) || parsedOsId <= 0) {
+                if (!Number.isSafeInteger(parsedOsId) || parsedOsId <= 0) {
                     return { success: false, message: "Selecione uma ordem de serviço válida." };
                 }
                 if (!Number.isInteger(parsedNota) || parsedNota < 1 || parsedNota > 5) {
@@ -468,10 +476,8 @@ no navegador. Nunca coloque service_role aqui.
                 const user = await currentUser();
                 if (!user) return { success: false, message: "Faça login para editar o perfil." };
 
-                const nome = String(profile.nome || "").trim();
-                const novoEmail = String(profile.email || "").trim().toLowerCase();
-                const telefone = String(profile.telefone || "").trim();
-                if (!nome || !novoEmail) return { success: false, message: "Informe nome e e-mail válidos." };
+                const { validateProfile } = await import('./input-rules.js');
+                const { nome, email: novoEmail, telefone } = validateProfile(profile);
 
                 // Alterações de e-mail podem exigir confirmação. Não gravar um novo
                 // endereço na tabela de clientes antes de ele ser confirmado no Auth.

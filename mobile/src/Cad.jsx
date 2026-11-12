@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import Brand from './Brand';
+import PhoneInput from './PhoneInput';
 import { registerUser } from './services/api';
 
 export default function Cad({ onNavigate }) {
@@ -79,6 +80,8 @@ export default function Cad({ onNavigate }) {
                 type="text"
                 id="nome"
                 name="nome"
+                minLength={2}
+                maxLength={150}
                 autoComplete="name"
                 required
                 value={formData.nome}
@@ -88,13 +91,12 @@ export default function Cad({ onNavigate }) {
 
             <div className="form-group">
               <label htmlFor="telefone">Telefone</label>
-              <input
-                type="tel"
+              <PhoneInput
                 id="telefone"
                 name="telefone"
                 autoComplete="tel"
                 value={formData.telefone}
-                onChange={handleChange}
+                onValueChange={telefone => setFormData(prev => ({ ...prev, telefone }))}
               />
             </div>
 
@@ -104,6 +106,9 @@ export default function Cad({ onNavigate }) {
                 type="email"
                 id="email"
                 name="email"
+                maxLength={254}
+                autoCapitalize="none"
+                spellCheck={false}
                 autoComplete="email"
                 required
                 value={formData.email}

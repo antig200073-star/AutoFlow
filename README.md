@@ -67,6 +67,8 @@ Também funciona `python qt/main.py`. Não use `python -m main.py`.
 
 ## Verificação do código
 
+As máscaras, limites e formatos de gravação dos três sistemas estão em [Entradas de dados](docs/ENTRADAS_DE_DADOS.md). A migração `input_validation_and_order_values` valida os campos no banco e salva peças, serviços e valores da O.S. em uma única transação.
+
 ```sh
 npm ci
 npm test
@@ -86,7 +88,7 @@ Os testes de banco executam a estrutura de referência, os scripts anteriores e 
 - A consulta de CNPJ depende da disponibilidade e cobertura da BrasilAPI. Uma falha não libera acesso.
 - Oficinas antigas precisam de conta Auth vinculada por um administrador e de revisão. A senha antiga da tabela não é reutilizada.
 - A criação de O.S. é atômica e limitada à oficina aprovada. O primeiro atendimento de um veículo já cadastrado usa um código gerado pelo cliente. A migração e a atualização conjunta estão descritas em [Vínculo entre cliente e O.S.](docs/VINCULO_CLIENTE_OS.md). Ordens antigas exigem conferência e reparo autorizado.
-- Alguns botões do Qt, a gestão de estoque e os campos de peças/valores da OS ainda não têm implementação completa.
+- Alguns botões do Qt e a gestão de estoque ainda não têm implementação completa.
 
 Consulte os detalhes e as regras de migração no [guia de verificação](docs/VERIFICACAO_OFICINAS.md). As chaves presentes nos clientes são publicáveis. Nunca configure uma chave secreta ou `service_role` no navegador, no mobile ou no Qt.
 

@@ -91,6 +91,16 @@ class OrderAutofillTests(unittest.TestCase):
         self.form.btnConsultarPlaca.click()
         self.wait_until(lambda: self.controller.state=='found')
 
+    def test_incomplete_code_never_queries_and_six_digits_preserve_zero(self):
+        self.form.txtCodigoVinculo.setText('00004')
+        self.form.txtPlaca.setText('ABC1234')
+        QTest.qWait(40)
+        self.lookup.assert_not_called()
+        self.assertFalse(self.form.btnSalvarOS.isEnabled())
+        self.form.txtCodigoVinculo.setText('000042')
+        self.wait_until(lambda: self.controller.state=='found')
+        self.lookup.assert_called_once_with('ABC1234', '000042')
+
     def test_slow_previous_plate_cannot_overwrite_current_plate(self):
         started, release = Event(), Event()
         def lookup(plate, code):
@@ -124,8 +134,8 @@ class OrderAutofillTests(unittest.TestCase):
 
     def test_service_normalizes_plate_and_does_not_guess_missing_year(self):
         db=Mock(); db.rpc.return_value.execute.return_value.data=FOUND
-        self.assertEqual(lookup_vehicle(db,'abc-1234',' code '),FOUND)
-        db.rpc.assert_called_once_with('lookup_workshop_vehicle',{'p_plate':'ABC1234','p_link_code':'code'})
+        self.assertEqual(lookup_vehicle(db,'abc-1234',' 000042 '),FOUND)
+        db.rpc.assert_called_once_with('lookup_workshop_vehicle',{'p_plate':'ABC1234','p_link_code':'000042'})
         self.assertEqual(vehicle_description({'model':'Modelo antigo','year':None}),'Modelo antigo')
         self.assertEqual(vehicle_description({'model':'Celta','year':2007.0}),'Celta 2007')
 

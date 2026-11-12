@@ -1,3 +1,4 @@
+import { validateProfile, textValue } from '../../../web/public/assets/js/input-rules.js';
 // Mesmas tabelas e regras do web; o cliente é injetado para permitir testes sem dados reais.
 export const maintenanceStatuses = ['Recebido', 'Diagnóstico', 'Aguardando Peça', 'Em Reparo', 'Pronto para Retirada'];
 export const statusLabels = {
@@ -113,6 +114,7 @@ export function createClientService(db, { emailRedirectTo } = {}) {
     };
   }
   async function createEvaluation({ osId, nota, comentario }) {
+    const comment = textValue(comentario, 'Comentário', 2000, 0, true);
     const id = Number(osId), rating = Number(nota);
     if (!Number.isSafeInteger(id) || id <= 0) throw Error('Selecione uma ordem de serviço válida.');
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw Error('Selecione uma nota de 1 a 5.');
@@ -127,7 +129,7 @@ export function createClientService(db, { emailRedirectTo } = {}) {
     if (existing.error) throw existing.error;
     if (existing.data) throw Error('Essa ordem de serviço já foi avaliada.');
     const { data, error } = await db.from('avaliacoes')
-      .insert({ os_id: id, nota: rating, comentario: String(comentario || '').trim() || null })
+      .insert({ os_id: id, nota: rating, comentario: comment || null })
       .select('id,os_id,nota,comentario,created_at').single();
     if (error) throw error;
     return { id: data.id, osId: data.os_id, oficina: order.oficinas?.nome || 'Oficina',
@@ -138,11 +140,8 @@ export function createClientService(db, { emailRedirectTo } = {}) {
     return { nome: client.nome || '', email: client.email || '', telefone: client.num_tel || '' };
   }
   async function updateProfile(profile) {
+    const { nome, email, telefone } = validateProfile(profile);
     const user = await currentUser();
-    const nome = String(profile.nome || '').trim();
-    const email = String(profile.email || '').trim().toLowerCase();
-    const telefone = String(profile.telefone || '').trim();
-    if (!nome || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw Error('Informe nome e e-mail válidos.');
     const { data, error } = await db.from('tb_cli')
       .update({ nome, email: user.email, num_tel: telefone || null }).eq('auth_user_id', user.id)
       .select('nome,email,num_tel').single();

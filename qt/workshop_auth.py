@@ -1,5 +1,6 @@
 """Regras de sessão da oficina. O banco aplica a autorização em cada operação."""
 import json
+from input_rules import cnpj_value
 
 WORKSHOP_FIELDS = "id,user_id,nome,cnpj,status,motivo_status,revisao"
 STATUS_MESSAGES = {
@@ -26,7 +27,7 @@ def require_approved(client):
 
 
 def register_workshop(client, cnpj):
-    normalized = ''.join(ch for ch in cnpj if ch.isalnum()).upper()
+    normalized = cnpj_value(cnpj)
     demo = len(normalized) == 14 and normalized[:12] == '000000000000' and normalized[-2:].isdigit() and normalized[-2:] != '00'
     # Nunca envia senha, status, user_id, situação cadastral ou dados empresariais
     # escolhidos pelo usuário. A função resolve tudo no servidor.

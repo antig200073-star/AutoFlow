@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 
 const customer = '00000000-0000-0000-0000-000000000001';
@@ -200,5 +200,30 @@ test('vínculo de O.S. com veículo do cliente sem duplicar cadastros (PostgreSQ
     await db.exec(await readFile(new URL('../supabase/migrations/20261023143914_client_vehicle_repair_audit.sql',import.meta.url),'utf8'));
     await asUser(customer,()=>assert.rejects(db.query('select * from private.client_vehicle_repair_audit'),/permission denied/));
     await asUser('',()=>assert.rejects(db.query('select * from private.client_vehicle_repair_audit'),/permission denied/),'anon');
+  });
+  await t.test('novo cadastro de O.S. grava valores e serviços atomicamente e preserva autorização',async()=>{
+    await db.exec(`alter table tb_cli add column email text,add column num_tel text,add column cep text;
+      alter table auth.users add column email text,add column raw_user_meta_data jsonb;
+      create table avaliacoes(id bigint primary key,comentario text);`);
+    const folder=new URL('../supabase/migrations/',import.meta.url);
+    const file=(await readdir(folder)).find(name=>name.endsWith('_input_validation_and_order_values.sql'));
+    await db.exec(await readFile(new URL(file,folder),'utf8'));
+    const issued=await asUser(stranger,()=>issue(16));
+    const create=(labor=1234.56,parts=80.5,code=issued.code)=>db.query(
+      "select create_workshop_order_validated('DEF4G56','Fiat Uno','Outra pessoa','Revisão','em_analise',$1,'Filtro de óleo',$2,$3) as id",[code,labor,parts]);
+    const before=(await db.query('select count(*)::int as n from ordens_servico')).rows[0].n;
+    await asUser('',()=>assert.rejects(create(),/permission denied/),'anon');
+    await asUser(customer,()=>assert.rejects(create(),/Oficina sem aprovação/));
+    await asUser(blocked,()=>assert.rejects(create(),/Oficina sem aprovação/));
+    await asUser(workshop,()=>assert.rejects(create(-1),/Valores inválidos/));
+    await asUser(workshop,()=>assert.rejects(create(1.234),/Valores inválidos/));
+    assert.equal((await db.query('select count(*)::int as n from ordens_servico')).rows[0].n,before);
+    assert.equal((await db.query('select used_at from private.vehicle_workshop_links where vehicle_id=16')).rows[0].used_at,null);
+    const id=(await asUser(workshop,()=>create())).rows[0].id;
+    const row=(await db.query('select cliente_id,veiculo_id,pecas_servicos,valor_mao_obra,valor_pecas from ordens_servico where id=$1',[id])).rows[0];
+    assert.deepEqual(row,{cliente_id:2,veiculo_id:16,pecas_servicos:'Filtro de óleo',valor_mao_obra:'1234.56',valor_pecas:'80.5'});
+    await asUser(workshop,()=>assert.rejects(create(),/Código de vínculo inválido/));
+    const unlinked=await asUser(workshop,()=>db.query("select create_workshop_order_validated('HJK8L90','Uno','Novo cliente','Revisão','em_analise',null,null,0,0) as id"));
+    assert.ok(unlinked.rows[0].id);
   });
 });

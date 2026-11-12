@@ -30,10 +30,7 @@
     }
 
     function normalizePlate(value) {
-        return value
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 7);
+        return /^[A-Za-z0-9 -]*$/.test(value) ? value.toUpperCase().replace(/[ -]/g, "") : value;
     }
 
     function isValidPlate(value) {
@@ -257,7 +254,7 @@
             anoInput.addEventListener("input", function() {
                 const ano = Number(anoInput.value);
 
-                if (anoInput.value === "" || (ano >= 1900 && ano <= anoAtual + 1)) {
+                if (anoInput.value === "" || (/^[0-9]{4}$/.test(anoInput.value) && ano >= 1900 && ano <= anoAtual + 1)) {
                     anoInput.setCustomValidity("");
                 } else {
                     anoInput.setCustomValidity(`Informe um ano entre 1900 e ${anoAtual + 1}.`);
@@ -732,7 +729,12 @@
 
         if (name && profile.nome !== undefined) name.value = profile.nome;
         if (email && profile.email !== undefined) email.value = profile.email;
-        if (phone && profile.telefone !== undefined) phone.value = profile.telefone;
+        if (phone && profile.telefone !== undefined) {
+            phone.value = profile.telefone;
+            import('./input-rules.js').then(({ formatPhone }) => {
+                if (phone.value === profile.telefone) phone.value = formatPhone(profile.telefone);
+            });
+        }
     }
 
     function initProfile() {
@@ -748,7 +750,10 @@
         let previousValues = [];
 
         function setEditing(editing) {
-            inputs.forEach(input => input.readOnly = !editing);
+            inputs.forEach(input => {
+                input.readOnly = !editing;
+                if (!editing) input.setCustomValidity('');
+            });
             editButton.hidden = editing;
             saveButton.hidden = !editing;
             cancelButton.hidden = !editing;
@@ -816,6 +821,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        import('./input-masks.js').then(({ initInputMasks }) => initInputMasks());
         initLogin();
         initRegister();
         initPasswordToggles();

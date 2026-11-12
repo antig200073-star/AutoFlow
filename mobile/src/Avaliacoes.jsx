@@ -61,7 +61,7 @@ export default function Avaliacoes() {
                 onClick={() => setRating(star)} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}>★</button>)}
             </div></fieldset>
             <div className="form-group"><label htmlFor="comentario">Comentário</label>
-              <textarea id="comentario" rows="5" placeholder="Conte como foi sua experiência..." value={comment} onChange={e => setComment(e.target.value)} /></div>
+              <textarea id="comentario" rows="5" maxLength={2000} placeholder="Conte como foi sua experiência (até 2.000 caracteres)..." value={comment} onChange={e => setComment(e.target.value)} /></div>
             <button type="submit">{busy ? 'Enviando…' : 'Enviar avaliação'}</button>
           </fieldset>
           {message.text && <p className={message.type} role="status">{message.text}</p>}

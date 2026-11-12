@@ -16,6 +16,7 @@
     return element;
   };
   const date = value => value ? new Date(value).toLocaleString('pt-BR') : 'Ainda não consultado';
+  import('./input-masks.js').then(({ initInputMasks }) => initInputMasks());
 
   function clearReview() {
     generation++;
@@ -95,8 +96,11 @@
     form.addEventListener('submit',async event => {
       event.preventDefault(); submit.disabled = true; message();
       try {
+        const { textValue } = await import('./input-rules.js');
+        const justification = textValue(reason.value, 'Justificativa', 2000, 20, true);
+        if (!transitions[workshop.status].includes(decision.value)) throw Error('Selecione uma decisão válida.');
         const { error } = await db.rpc('review_workshop', { p_id: workshop.id, p_revision: workshop.revisao,
-          p_status: decision.value, p_reason: reason.value.trim(), p_ownership: ownership.input.checked, p_activity: activity.input.checked });
+          p_status: decision.value, p_reason: justification, p_ownership: ownership.input.checked, p_activity: activity.input.checked });
         if (error) throw error;
         await load(); message('Decisão registrada. A regra de acesso já foi atualizada no banco.');
       } catch (error) { message(error.message || 'Não foi possível salvar. Atualize a fila e tente novamente.'); }
@@ -126,7 +130,8 @@
   $('admin-login').addEventListener('submit', async event => {
     event.preventDefault(); message(); const button = event.target.querySelector('button'); button.disabled = true;
     try {
-      const { error } = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+      const { normalizeEmail } = await import('./input-rules.js');
+      const { error } = await db.auth.signInWithPassword({ email: normalizeEmail($('email').value), password: $('password').value });
       if (error) throw error;
       $('password').value = ''; await session();
     } catch { message('Não foi possível entrar. Confira e-mail, senha e confirmação de e-mail.'); }

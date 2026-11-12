@@ -1,4 +1,6 @@
 import { vehicleError } from './vehicle-service.js';
+import { bindInput } from './input-masks.js';
+import { formatPlate, normalizePlate, formatKilometers, parseKilometers, parseYear, textValue } from './input-rules.js';
 
 // Componente compartilhado: mesma câmera, validação e janela no HTML e React.
 if (globalThis.customElements && !customElements.get('autoflow-vehicle-registration')) {
@@ -51,11 +53,11 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
                   <p class="hint">Escolha uma foto existente ou tire uma foto com a câmera. Formatos JPG, PNG ou WebP, até 5 MB.</p>
                 </section>
                 <div class="grid">
-                  <div><label for="plate">Placa</label><input id="plate" name="placa" placeholder="ABC1D23" maxlength="8" autocomplete="off" autocapitalize="characters" required></div>
+                  <div><label for="plate">Placa</label><input id="plate" name="placa" placeholder="ABC1D23 ou ABC-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" required></div>
                   <div><label for="brand">Marca</label><input id="brand" name="marca" placeholder="Ex.: Chevrolet" maxlength="80" required></div>
                   <div class="wide"><label for="model">Modelo</label><input id="model" name="modelo" placeholder="Ex.: Onix 1.0" maxlength="120" required></div>
-                  <div><label for="year">Ano do modelo</label><input id="year" name="ano" type="number" inputmode="numeric" min="1900" max="${new Date().getFullYear()+1}" step="1" placeholder="2022" required></div>
-                  <div><label for="km">Quilometragem atual (km)</label><input id="km" name="km_atual" type="number" inputmode="numeric" min="0" max="999999999" step="1" placeholder="45000" required></div>
+                  <div><label for="year">Ano do modelo</label><input id="year" name="ano" type="text" inputmode="numeric" pattern="[0-9]{4}" placeholder="2022" required><p class="hint">De 1900 a ${new Date().getFullYear()+1}, com 4 números.</p></div>
+                  <div><label for="km">Quilometragem atual (km)</label><input id="km" name="km_atual" type="text" inputmode="numeric" placeholder="45.000" required><p class="hint">Quilômetros inteiros, até 999.999.999.</p></div>
                 </div>
               </fieldset>
               <p id="message" role="status" aria-live="polite"></p>
@@ -71,7 +73,11 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
       this.$('choose').onclick=()=>this.$('file').click();
       this.$('file').onchange=event=>this.choosePhoto(event);
       this.$('shoot').onclick=()=>this.takePhoto();
-      this.$('plate').oninput=()=>{ this.$('plate').value=this.$('plate').value.toUpperCase(); };
+      bindInput(this.$('plate'), { format: formatPlate, validate: normalizePlate });
+      bindInput(this.$('year'), { validate: parseYear });
+      bindInput(this.$('km'), { format: formatKilometers, formatOnBlur: true, validate: parseKilometers });
+      bindInput(this.$('brand'), { validate: value => textValue(value, 'Marca', 80, 1) });
+      bindInput(this.$('model'), { validate: value => textValue(value, 'Modelo', 120, 1) });
       this.dialog.addEventListener('cancel',event=>{event.preventDefault();this.close();});
       this.dialog.addEventListener('close',()=>this.stopCamera());
       this.$('form').onsubmit=event=>{event.preventDefault();this.save();};
@@ -194,6 +200,7 @@ if (globalThis.customElements && !customElements.get('autoflow-vehicle-registrat
     }
     async save() {
       if(this.busy)return;
+      if(!this.$('form').reportValidity())return;
       if(!this.capture) {this.$('message').textContent='Tire uma foto ou escolha uma imagem do computador antes de salvar.';this.$('start').focus();return;}
       if(!this.service) {this.$('message').textContent='Não foi possível conectar. Atualize a página.';return;}
       this.busy=true;this.stopCamera();this.$('message').textContent='Salvando foto e veículo…';

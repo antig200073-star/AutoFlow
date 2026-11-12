@@ -97,17 +97,17 @@ test('mobile: falha nas avaliações não oculta oficinas aprovadas', async () =
 });
 
 test('mobile: perfil usa email confirmado e mantém o antigo até a confirmação no Auth', async () => {
-  const { db, calls } = mock({ tables: { tb_cli: ok({ nome: 'Nome salvo', num_tel: '11999' }) } });
+  const { db, calls } = mock({ tables: { tb_cli: ok({ nome: 'Nome salvo', num_tel: '11912345678' }) } });
   const service = createClientService(db);
   assert.equal((await service.loadProfile()).email, 'confirmed@example.test');
-  const result = await service.updateProfile({ nome: 'Nome salvo', email: 'new@example.test', telefone: '11999' });
+  const result = await service.updateProfile({ nome: 'Nome salvo', email: 'new@example.test', telefone: '11912345678' });
   assert.equal(result.profile.email, 'confirmed@example.test'); assert.match(result.message, /Confirme/);
   assert.equal(calls.find(x => x.action === 'update').payload.email, 'confirmed@example.test');
   assert.deepEqual(calls.find(x => x.authUpdate).authUpdate, { email: 'new@example.test' });
 });
 
 test('mobile: falha parcial de troca de email informa que nome e telefone já foram salvos', async () => {
-  const { db } = mock({ authError: Error('email indisponível'), tables: { tb_cli: ok({ nome: 'Novo nome', num_tel: '11999' }) } });
+  const { db } = mock({ authError: Error('email indisponível'), tables: { tb_cli: ok({ nome: 'Novo nome', num_tel: '11912345678' }) } });
   const result = await createClientService(db).updateProfile({ nome: 'Novo nome', email: 'new@example.test' });
   assert.equal(result.warning, true); assert.match(result.message, /Nome e telefone salvos/);
   assert.equal(result.profile.email, 'confirmed@example.test');
@@ -133,4 +133,13 @@ test('mobile: atualização a cada 30s evita concorrência, pausa em segundo pla
   doc.visibilityState = 'visible'; listeners.get('visibilitychange')(); assert.equal(requests, 2);
   stop(); finish({}); await new Promise(resolve => setImmediate(resolve));
   assert.equal(renders, 1); assert.equal(listeners.size, 0);
+});
+
+
+test('mobile: dados de perfil e comentários inválidos não chegam ao banco', async () => {
+  const { db, calls } = mock();
+  const service = createClientService(db);
+  await assert.rejects(service.updateProfile({ nome: 'Cliente', email: 'ok@example.com', telefone: '11999' }), /telefone/);
+  await assert.rejects(service.createEvaluation({ osId: 1, nota: 5, comentario: 'x'.repeat(2001) }), /Comentário/);
+  assert.equal(calls.length, 0);
 });

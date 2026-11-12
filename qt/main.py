@@ -12,6 +12,8 @@ from workshop_auth import current_workshop, require_approved, register_workshop,
 from order_rows import order_row_values, format_entry_date
 from order_service import create_order, order_error
 from order_autofill import OrderAutofill
+from input_rules import email_value, cnpj_value
+from input_masks import configure_inputs
 from PyQt5.QtCore import QTimer
 oficina_logada = None
 
@@ -107,6 +109,8 @@ def cadastrar_usuario():
         return
     form_cad.btnCadastrar.setEnabled(False)
     try:
+        email = email_value(email)
+        cnpj = cnpj_value(cnpj)
         session = supabase.auth.get_session()
         if not session:
             if len(senha) < 8:
@@ -135,9 +139,12 @@ def efetuar_login():
         return
     form.btnEntrar.setEnabled(False)
     try:
+        email = email_value(email)
         supabase.auth.sign_in_with_password({"email": email, "password": senha})
         form.txtSenha.clear()
         conferir_acesso()
+    except ValueError as error:
+        QMessageBox.warning(form, "Login", str(error))
     except Exception:
         QMessageBox.warning(form, "Login", "Não foi possível entrar. Confira e-mail, senha, confirmação de e-mail e conexão.")
     finally:
@@ -370,12 +377,19 @@ def salvar_ordem_servico():
     if not acesso_aprovado():
         return
     try:
+        for field in (form_cad_os.spinMaoObra, form_cad_os.spinPecas):
+            if not field.hasAcceptableInput():
+                raise ValueError('Confira os valores de mão de obra e peças: use reais com até duas casas decimais.')
+            field.interpretText()
         create_order(supabase, {
             "p_plate": form_cad_os.txtPlaca.text().strip(),
             "p_model": form_cad_os.txtVeiculo.text().strip(),
             "p_client": form_cad_os.txtCliente.text().strip(),
             "p_problem": form_cad_os.txtDefeito.toPlainText().strip(),
-            "p_status": STATUS_MAP.get(form_cad_os.cmbStatus.currentText(), "aguardando"),
+            "p_status": STATUS_MAP.get(form_cad_os.cmbStatus.currentText()),
+            "p_services": form_cad_os.txtPecasServicos.toPlainText(),
+            "p_labor": form_cad_os.spinMaoObra.value(),
+            "p_parts": form_cad_os.spinPecas.value(),
         }, form_cad_os.txtCodigoVinculo.text())
         QMessageBox.information(form_cad_os, "Sucesso", "Ordem de serviço criada.")
         form_cad_os.close()
@@ -397,8 +411,9 @@ form = uic.loadUi(str(BASE_DIR / "t_loguin.ui"))
 form_cad = uic.loadUi(str(BASE_DIR / "t_cad.ui"))
 form_prin = uic.loadUi(str(BASE_DIR / "t_prin.ui"))
 form_cad_os = uic.loadUi(str(BASE_DIR / "t_cadOs.ui"))
-order_autofill = OrderAutofill(form_cad_os, supabase)
 form_patio = uic.loadUi(str(BASE_DIR / "t_veipatio.ui"))
+input_masks = configure_inputs(form, form_cad, form_cad_os, form_prin, form_patio)
+order_autofill = OrderAutofill(form_cad_os, supabase)
 
 # Logo original e apresentação consistente nas janelas.
 for window in (form, form_cad, form_prin, form_cad_os, form_patio):

@@ -1,16 +1,14 @@
+import { normalizePlate, textValue, parseYear, parseKilometers } from './input-rules.js';
+
 export const PHOTO_BUCKET = 'vehicle-photos';
 const FIELDS = 'id_veiculo,placa,marca,modelo,ano_do_modelo,km_atual,foto_path';
 
 export function validateVehicle(input) {
-  const placa = String(input.placa || '').toUpperCase().replace(/[ -]/g, '');
-  const marca = String(input.marca || '').trim();
-  const modelo = String(input.modelo || '').trim();
-  const ano = Number(input.ano);
-  const km = Number(input.km_atual);
-  if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa)) throw Error('Informe uma placa válida, como ABC1D23 ou ABC1234.');
-  if (!marca || marca.length > 80 || !modelo || modelo.length > 120) throw Error('Informe a marca e o modelo do veículo.');
-  if (!Number.isInteger(ano) || ano < 1900 || ano > new Date().getFullYear() + 1) throw Error('Informe um ano válido.');
-  if (input.km_atual === '' || input.km_atual == null || !Number.isSafeInteger(km) || km < 0 || km > 999999999) throw Error('Informe a quilometragem em quilômetros inteiros, sem pontos ou vírgulas.');
+  const placa = normalizePlate(input.placa);
+  const marca = textValue(input.marca, 'Marca', 80, 1);
+  const modelo = textValue(input.modelo, 'Modelo', 120, 1);
+  const ano = parseYear(input.ano);
+  const km = parseKilometers(input.km_atual);
   return { placa, marca, modelo, ano, km_atual: km };
 }
 

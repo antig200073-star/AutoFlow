@@ -51,6 +51,9 @@ function Login({ onNavigate }) {
                 type="email"
                 id="email"
                 name="email"
+                maxLength={254}
+                autoCapitalize="none"
+                spellCheck={false}
                 autoComplete="email"
                 required
                 value={email}
